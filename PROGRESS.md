@@ -1,8 +1,20 @@
 # Engineering progress
 
 ## Current status
-The original serial acquisition and browser viewer were verified on physical hardware by the project team. The initial ROS publisher was unverified and omitted Doppler. Implemented and offline-tested the reusable parser, recording/replay, classical filtering, calibration/fusion, occupancy, planner, and simplified synthetic experiments. Added ROS adapters, launch, and Nav2 overlay; these are not runtime-verified. No autonomous physical navigation claim is supported.
-Immediate priorities: build on Humble, validate timestamps/TF and stationary clouds, collect calibrated single/dual recordings, integrate a stale-data motor watchdog and global localization, then run supervised navigation trials. This development machine runs Debian/Python 3.12, without ROS 2 or radar USB devices; physical navigation cannot be validated here.
+The original serial acquisition and browser viewer were verified on physical
+hardware by the project team. The new single-radar ROS pipeline now builds and
+runs under ROS 2 Humble in a container. Integration tests exercise serial
+pseudo-terminals, delayed odometry TF, processed clouds, aging occupancy,
+operator command gating, localization loss and the actual Nav2 local costmap.
+These tests do not establish physical Jetson performance or motor stopping.
+The reactive demo defaults to dry output and requires an operator enable lease.
+
+Immediate priority: follow docs/JETSON_DEMO.md on the Jetson, measure the mount,
+verify real serial/TF rates and obstacle placement, test stopping with wheels
+lifted, then conduct supervised low-speed trials. Nav2 goal navigation uses
+prior-map AMCL (LiDAR-assisted localization) and radar local obstacle perception.
+Full Nav2 actions, physical stopping, dual-radar occupancy/control and radar-only
+localization remain unverified. The cloud host has no radar USB or Jetson access.
 
 ## Chronological journal
 ### Prior work (dates not recorded)
@@ -56,3 +68,60 @@ TI coordinates are x right, y forward, z up; ROS sensor coordinates are x forwar
   Global localization, aging/clearing, watchdog validation, real-map metrics and
   bag-to-ground-truth evaluation remain necessary for a successful demonstration.
 - Commit reference: this implementation commit (resolve with git log -- PROGRESS.md).
+
+### 2026-11-06 — Jetson runtime and control integration
+- Shifted work from toy experiments to the real Humble deployment path.
+  Added docs/JETSON_DEMO.md with minimum hardware actions and quantitative logging.
+- Corrected mapping to use configured filter evidence. Accumulated points no
+  longer refresh map evidence indefinitely. A 1.5 s TTL resets cells to unknown
+  on a 5 Hz map timer, even if acquisition stops.
+- Replaced raw-cloud Nav2 local perception with the processed occupancy grid.
+  Humble StaticLayer receives full transient-local map updates and inflation.
+  Unknown is unmarked in the local costmap, not asserted physically free.
+  The global planner uses a prior static map; live LiDAR is retained only for
+  AMCL in the proposed first goal-navigation demonstration.
+- Added radar_control: 20 Hz output, 0.3 s perception/request/enable deadlines,
+  invalid/empty input stopping, obstacle clearance checks, forward/turn caps and
+  reverse rejection. Defaults to a dry topic and disarmed. Reactive policy
+  generates slow forward/turn requests through the same gate.
+  Base/OpenCR command timeout is still mandatory if the gate/host dies.
+- Added localization gating for Nav2 (fresh map → odom, allowing AMCL future
+  dating), measured mount launch, Nav2 parameter merge/launch and radar_probe
+  for rates, host-receipt latency, sequence gaps and map counts.
+- Actual Humble testing exposed shutdown-context errors; fixed signal handling
+  so sensorStop and final zero commands occur before destroying the ROS context.
+  A later test also exposed interruption inside a TF C-extension callback;
+  signal handlers now set an event and the executor exits between callbacks.
+  Short-window probe validation initially failed; the two-second integration
+  window now records both raw and processed messages with preserved logs.
+  Added bounded measurement-time TF retries for delayed wheel odometry; no
+  silent identity/latest-transform substitution.
+- Built the package with colcon on Ubuntu 22.04/Python 3.10 in a Humble container.
+  Passed 22 core tests plus three real ROS middleware integration tests:
+  serial acquisition through mapping and command stopping; missing/stale
+  localization rejection; actual Nav2 StaticLayer marking and obstacle removal.
+  The serial test uses 50 ms delayed odometry and verifies Doppler, obstacle stop,
+  enable-release stop, sensor-dropout stop, map expiry and sensorStop cleanup.
+- Built seven required Nav2 packages from official Humble source commit
+  3c3db59d6969d8ecee8e68468693d006397f4a0c; validated the shipped costmap overlay.
+  Network policy blocked packages.ros.org, so the official Nav2 dependency image
+  and source build were used with TLS/checksum verification preserved.
+- Nav2 parameter merge passed against the official default file. A separate
+  attempt to build only nav2_bringup failed because its complete navigation
+  dependency graph was not built. Full AMCL/controller/action execution remains
+  unrun; costmap runtime validation is not a claim of full Nav2 readiness.
+- Added Humble integration CI; remote CI results are not yet verified.
+- No new physical results or movement commands. Hardware acceptance must measure
+  actual stopping distance, blind spots, mounting/TF accuracy and interference.
+  Preserve the existing physical history; do not label PTY middleware results as
+  real sensor trials.
+- Commit reference: this runtime-integration commit (git log -- PROGRESS.md).
+- Recorded serial/ROS probe sample: 20 raw and 20 processed frames in 2.024 s
+  (~9.88 Hz), zero sequence gaps, receipt-to-probe p50 71.8 ms/p95 84.6 ms
+  with deliberately 50 ms delayed odometry; stale-output stop 0.300 s after
+  pausing serial traffic. These are PTY/container timing results, not hardware
+  latency or physical braking measurements.
+- Final verification after the shutdown and TF fixes: all 22 core and all three
+  Humble/Nav2 integration tests passed, with no skipped tests. A second probe run
+  measured ~9.87 Hz and 84.4 ms p95; dropout output stopped in 0.250 s.
+  Recorded representative runtime evidence is results/humble_runtime.json.

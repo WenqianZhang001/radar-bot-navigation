@@ -1,9 +1,14 @@
+# Deployment reference
+
+For the current integrated workflow, use [Jetson demonstration](JETSON_DEMO.md).
+The checklist includes filtered-map Nav2 integration, command gating and localization.
+
 # Jetson deployment and validation
 
 ## Install
 Ubuntu 22.04 with an existing ROS 2 Humble and TurtleBot3 installation is required.
-The cloud tests use Python 3.12; the following ROS commands require Jetson's system
-Python and are not validated in the cloud.
+Core tests run on Python 3.12 and Humble integration runs on container Python 3.10.
+The Jetson hardware remains unvalidated; use its ROS system Python.
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -61,31 +66,14 @@ publishes /radar/fused. It does not estimate extrinsics or solve clock alignment
 Use radar_navigation.fusion.calibrate on surveyed matching reflector coordinates;
 check the RMS residual and validate against held-out reflector positions.
 
-## Navigation integration gate
+## Navigation integration
 
-config/nav2_radar.yaml is an **overlay** for the robot's working Humble Nav2
-parameters, not a complete runnable configuration. Merge its local-costmap
-sections; remove rear from observation_sources for single-radar operation.
-Nav2 transforms raw clouds using TF. Clearing is disabled because sparse radar
-returns do not justify LiDAR-style free-space assumptions. Consequently obstacles
-can persist in the local costmap; operator validation of clearing/aging remains
-required. Expected update rate is a costmap freshness check, not a motor watchdog.
+Use docs/JETSON_DEMO.md for the current gate, aging-map Nav2 configuration and
+AMCL localization launch. The old raw-point ObstacleLayer overlay has been
+replaced. Do not use observation_persistence as obstacle expiry: it only controls
+observation buffering and does not erase already marked cells.
 
-Global localization/planning still requires a validated map and localization
-source. Wheel odometry alone drifts. The provided odometry-frame occupancy grid
-is experimental, fixed at 20×20 m, and cannot be represented as a validated
-global navigation map. Do not relabel a LiDAR-localized run as radar-only navigation.
-
-Before supervised movement:
-1. Verify all TF, topic rates, timestamp age, measured footprint and radar coverage
-   with the robot stationary. Confirm a new stationary obstacle is marked.
-2. Verify disconnects/stale perception cause a stop through the robot's independent
-   command watchdog and emergency stop. This repository does not yet implement
-   a validated command safety gate.
-3. Have an operator validate low-speed goals in a bounded area, with an emergency
-   stop available. No movement command is issued by installation or radar launch.
-4. Record odometry, TF, radar clouds/metadata, cmd_vel, Nav2 action outcomes,
-   reference sensing, and operator interventions.
-
-ROS compilation/import, actual TF timing, Nav2 behavior, firmware side-info
-format, dual-radar RF interference and physical control remain deployment checks.
+The map uses configured filter results and refreshes occupancy only from current
+evidence, not accumulated history. Cells expire to unknown after 1.5 seconds.
+Nav2 locally treats unknown as unmarked; the command gate separately stops stale
+perception. Validate both behaviors on the robot before supervised motion.

@@ -44,6 +44,7 @@ class Filter:
                         for k, values in self.history.items()}
         self.history = {k: v for k, v in self.history.items() if v}
         accepted, seen = [], set()
+        self.fresh = []
         for i, p in enumerate(ros_points(frame)):
             if not all(map(math.isfinite, p)):
                 continue
@@ -62,10 +63,13 @@ class Filter:
             moving = self.doppler and abs(residual) > .2
             if moving:
                 accepted.append(world)
+                self.fresh.append(world)
                 continue
             if key not in seen:
                 self.history.setdefault(key, []).append((now, world))
                 seen.add(key)
+                if len(self.history[key]) >= self.confirmations:
+                    self.fresh.append(world)
         for values in self.history.values():
             if len(values) >= self.confirmations:
                 accepted.append(values[-1][1])
@@ -79,6 +83,7 @@ class Grid:
         self.origin, self.clear = origin, clear
         self.odds = [0.] * (width*height)
         self.seen = [False] * len(self.odds)
+        self.updated = [None] * len(self.odds)
 
     def cell(self, x, y):
         return (math.floor((x-self.origin[0])/self.resolution),
@@ -88,7 +93,13 @@ class Grid:
         x, y = cell
         return y*self.width+x if 0 <= x < self.width and 0 <= y < self.height else None
 
-    def update(self, points, origin=(0., 0.)):
+    def expire(self, now, ttl):
+        """Expired evidence becomes unknown, never asserted free."""
+        for idx, stamp in enumerate(self.updated):
+            if stamp is not None and (now-stamp > ttl or now < stamp):
+                self.odds[idx], self.seen[idx], self.updated[idx] = 0., False, None
+
+    def update(self, points, origin=(0., 0.), stamp=None):
         occupied, free = set(), set()
         for x, y, *_ in points:
             end = self.cell(x, y)
@@ -106,9 +117,11 @@ class Grid:
         for idx in free - occupied:
             self.odds[idx] = max(-4., self.odds[idx]-.4)
             self.seen[idx] = True
+            self.updated[idx] = stamp
         for idx in occupied:
             self.odds[idx] = min(4., self.odds[idx]+.85)
             self.seen[idx] = True
+            self.updated[idx] = stamp
 
     def values(self):
         return [round(100/(1+math.exp(-v))) if known else -1

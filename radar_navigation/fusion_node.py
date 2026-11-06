@@ -30,15 +30,17 @@ def main():
             points=[tuple(float(v) for v in p) for p in read_points(
                 msg,field_names=('x','y','z','doppler'),skip_nans=True)]
             points=self.fusion.update(sensor,stamp,points)
-            if points:
-                self.pub.publish(create_cloud(Header(stamp=msg.header.stamp,frame_id=self.fixed),
+            self.pub.publish(create_cloud(Header(stamp=msg.header.stamp,frame_id=self.fixed),
                                                msg.fields,points))
-    rclpy.init()
+    from .lifecycle import initialize, begin_cleanup
+    shutdown = initialize()
     node=FusionNode()
     try:
-        rclpy.spin(node)
+        while rclpy.ok() and not shutdown.is_set():
+            rclpy.spin_once(node, timeout_sec=.1)
     except KeyboardInterrupt:
         pass
     finally:
+        begin_cleanup()
         node.destroy_node()
         rclpy.shutdown()

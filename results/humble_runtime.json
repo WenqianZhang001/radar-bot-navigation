@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-06",
+  "environment": "Ubuntu 22.04 / ROS 2 Humble / Python 3.10 container, x86_64",
+  "sensor_source": "serial pseudo-terminal, SDK 3.x packet fixture at approximately 10 Hz",
+  "odometry_delay_ms": 50,
+  "physical_hardware_tested": false,
+  "nav2_source_commit": "3c3db59d6969d8ecee8e68468693d006397f4a0c",
+  "probe_sample": {
+    "raw": 20,
+    "processed": 20,
+    "frame_gaps": 0,
+    "seconds": 2.0239742049998313,
+    "raw_hz": 9.881548860945916,
+    "processed_hz": 9.881548860945916,
+    "receipt_to_probe_ms_p50": 71.75778700000001,
+    "receipt_to_probe_ms_p95": 84.593403,
+    "occupied_cells": 1,
+    "unknown_cells": 39999
+  },
+  "serial_dropout_to_zero_output_s": 0.2999555119999968,
+  "limitations": [
+    "Dry command topic only; no motors or physical braking measured.",
+    "Host receipt timing excludes radar acquisition and serial transmission delay.",
+    "Costmap runtime verified; full Nav2 goal/action and AMCL runtime not executed.",
+    "Physical blind spots, false negatives, stopping distances and dual-radar interference unmeasured."
+  ]
+}

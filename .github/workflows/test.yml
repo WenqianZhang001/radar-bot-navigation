@@ -15,3 +15,19 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python -m radar_navigation.evaluate --output /tmp/radar-results
       - run: python -m radar_navigation.simulate --output /tmp/navigation.json
+
+  humble:
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install runtime dependencies
+        run: apt-get update && apt-get install -y python3-serial ros-humble-nav2-costmap-2d
+      - name: Build and validate real ROS nodes
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --symlink-install --packages-select radar_navigation
+          source install/setup.bash
+          python3 -m unittest discover -s tests -v
+          ROS_DOMAIN_ID=89 python3 -m unittest discover -s tests_ros -v

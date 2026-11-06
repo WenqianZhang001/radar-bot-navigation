@@ -3,6 +3,9 @@
 Python radar acquisition/perception with ROS 2 Humble adapters for Jetson Orin Nano
 and TurtleBot3 Waffle Pi. Physical acquisition/viewer were verified by the project
 team; the new navigation integration is experimental and has not run on a robot.
+Start with the [Jetson demonstration checklist](docs/JETSON_DEMO.md): measured TF,
+real sensor probe, dry-output watchdog test, then operator-supervised reactive
+motion. Humble middleware integration is tested with serial pseudo-terminals.
 
 Architecture: one/two AWR1843BOOST → bounded serial parser → timestamped JSONL /
 PointCloud2 (x, y, z, Doppler) → filtering and fixed-frame fusion → occupancy /
@@ -33,9 +36,12 @@ unknown; optional ray clearing is an experimental assumption. Static obstacles
 are retained regardless of Doppler.
 
 ROS adapters publish raw/filtered points, metadata, health and occupancy, and
-require measured TF. Nav2 parameters are an overlay requiring integration with
-the robot's existing configuration. Autonomous physical navigation, radar-only
-localization, a stale-data motor watchdog and ROS runtime validation remain open.
+require measured TF. Nav2 consumes the processed, aging occupancy grid through a local StaticLayer;
+a merge script preserves the robot's validated controller parameters. A command
+gate enforces fresh perception, fresh requests and an operator enable lease,
+with a dry output by default. Prior-map AMCL localization is supported explicitly
+as LiDAR-assisted localization. Autonomous physical validation and radar-only
+localization remain open; the base/OpenCR must enforce its own command timeout.
 
 ## Original live viewer guide
 

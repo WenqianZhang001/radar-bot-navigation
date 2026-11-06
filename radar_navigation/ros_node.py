@@ -14,6 +14,7 @@ def main():
     from rclpy.node import Node
     from rclpy.time import Time
     from rclpy.duration import Duration
+    from rclpy.qos import QoSProfile, DurabilityPolicy
     from sensor_msgs.msg import PointCloud2, PointField
     from sensor_msgs_py.point_cloud2 import create_cloud
     from std_msgs.msg import Header, String
@@ -25,12 +26,14 @@ def main():
             super().__init__('radar_pipeline')
             defaults = dict(cli='', data='', cfg='', sensor='radar_front',
                             replay='', frame_id='radar_front', fixed_frame='odom',
-                            min_snr=0., confirmations=1, clear_rays=False)
+                            min_snr=0., confirmations=1, clear_rays=False,
+                            obstacle_ttl=1.5, max_frame_age=.3)
             self.settings = {k: self.declare_parameter(k, v).value for k, v in defaults.items()}
             self.raw = self.create_publisher(PointCloud2, 'points_raw', 10)
             self.filtered = self.create_publisher(PointCloud2, 'points', 10)
             self.metadata = self.create_publisher(String, 'metadata', 10)
-            self.map_pub = self.create_publisher(OccupancyGrid, 'occupancy', 1)
+            self.map_pub = self.create_publisher(OccupancyGrid, 'occupancy',
+                QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
             self.status = self.create_publisher(String, 'status', 10)
             self.fields = [PointField(name=n, offset=i*4, datatype=PointField.FLOAT32, count=1)
                            for i, n in enumerate(('x', 'y', 'z', 'doppler'))]
@@ -41,9 +44,11 @@ def main():
             self.grid = Grid(clear=self.settings['clear_rays'])
             self.inbox = queue.Queue(maxsize=20)
             self.stop = threading.Event()
-            self.last = time.monotonic()
+            self.pending = None
+            self.last = -math.inf
             self.create_timer(.02, self.process)
-            self.create_timer(1., self.health)
+            self.create_timer(.1, self.health)
+            self.create_timer(.2, self.publish_map)
             self.thread = threading.Thread(target=self.worker, daemon=True)
             self.thread.start()
 
@@ -77,22 +82,33 @@ def main():
 
         def process(self):
             for _ in range(5):
-                try:
-                    frame = self.inbox.get_nowait()
-                except queue.Empty:
-                    return
-                self.last = time.monotonic()
+                first_attempt = self.pending is None
+                if first_attempt:
+                    try:
+                        frame = self.inbox.get_nowait()
+                    except queue.Empty:
+                        return
+                else:
+                    frame = self.pending
+                    self.pending = None
+                age = (self.get_clock().now().nanoseconds-frame.stamp_ns)/1e9
+                if not 0 <= age <= self.settings['max_frame_age']:
+                    continue
                 stamp = Time(nanoseconds=frame.stamp_ns).to_msg()
                 header = Header(stamp=stamp, frame_id=self.settings['frame_id'])
-                self.raw.publish(create_cloud(header, self.fields, ros_points(frame)))
-                self.metadata.publish(String(data=json.dumps(frame.to_dict())))
+                if first_attempt:
+                    self.raw.publish(create_cloud(header, self.fields, ros_points(frame)))
+                    self.metadata.publish(String(data=json.dumps(frame.to_dict())))
                 try:
                     tf = self.buffer.lookup_transform(self.settings['fixed_frame'],
                             self.settings['frame_id'], Time.from_msg(stamp),
                             timeout=Duration(seconds=0.))
                 except Exception as exc:
-                    self.get_logger().warning('Skipping map: transform unavailable: '+str(exc))
-                    continue
+                    self.get_logger().warning('Waiting for measurement-time TF: '+str(exc), throttle_duration_sec=2.)
+                    # Let the executor receive newer odometry before retrying.
+                    # The max_frame_age deadline above bounds this wait.
+                    self.pending = frame
+                    return
                 t, q = tf.transform.translation, tf.transform.rotation
                 # Planar mounting is required: reject roll/pitch rather than silently misproject.
                 if abs(q.x) > .01 or abs(q.y) > .01:
@@ -100,27 +116,33 @@ def main():
                     continue
                 pose = Pose(t.x, t.y, 2*math.atan2(q.z, q.w), t.z)
                 points = self.filter.update(frame, pose)
+                self.last = time.monotonic()-age
                 header.frame_id = self.settings['fixed_frame']
                 self.filtered.publish(create_cloud(header, self.fields, points))
-                # Map only fresh measurements, not accumulated points counted repeatedly.
-                current = Filter().update(frame, pose)
-                self.grid.update(current, (t.x, t.y))
-                grid = OccupancyGrid()
-                grid.header = header
-                grid.info.resolution = self.grid.resolution
-                grid.info.width, grid.info.height = self.grid.width, self.grid.height
-                grid.info.origin.position.x, grid.info.origin.position.y = self.grid.origin
-                grid.info.origin.orientation.w = 1.
-                grid.data = self.grid.values()
-                self.map_pub.publish(grid)
+                self.grid.update(self.filter.fresh, (t.x, t.y), frame.stamp_ns/1e9)
 
-    rclpy.init()
+        def publish_map(self):
+            now = self.get_clock().now()
+            self.grid.expire(now.nanoseconds/1e9, self.settings['obstacle_ttl'])
+            grid = OccupancyGrid()
+            grid.header = Header(stamp=now.to_msg(), frame_id=self.settings['fixed_frame'])
+            grid.info.resolution = self.grid.resolution
+            grid.info.width, grid.info.height = self.grid.width, self.grid.height
+            grid.info.origin.position.x, grid.info.origin.position.y = self.grid.origin
+            grid.info.origin.orientation.w = 1.
+            grid.data = self.grid.values()
+            self.map_pub.publish(grid)
+
+    from .lifecycle import initialize, begin_cleanup
+    shutdown = initialize()
     node = RadarNode()
     try:
-        rclpy.spin(node)
+        while rclpy.ok() and not shutdown.is_set():
+            rclpy.spin_once(node, timeout_sec=.1)
     except KeyboardInterrupt:
         pass
     finally:
+        begin_cleanup()
         node.stop.set()
         node.thread.join(timeout=5.)
         node.destroy_node()
