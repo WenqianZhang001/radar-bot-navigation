@@ -1,0 +1,33 @@
+# Merge these sections into the robot's validated Humble Nav2 configuration.
+# This file is an overlay, not a standalone Nav2 parameter file.
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        observation_sources: front rear
+        front:
+          topic: /radar_front/points_raw
+          data_type: PointCloud2
+          marking: true
+          clearing: false
+          observation_persistence: 0.3
+          expected_update_rate: 0.3
+          min_obstacle_height: 0.05
+          max_obstacle_height: 1.5
+          obstacle_max_range: 8.0
+        rear:
+          topic: /radar_rear/points_raw
+          data_type: PointCloud2
+          marking: true
+          clearing: false
+          observation_persistence: 0.3
+          expected_update_rate: 0.3
+          min_obstacle_height: 0.05
+          max_obstacle_height: 1.5
+          obstacle_max_range: 8.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.45
+        cost_scaling_factor: 3.0

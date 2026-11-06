@@ -26,6 +26,8 @@ def find_ports():
     data = glob.glob('/dev/serial/by-id/*XDS110*if03*')
     if not cli or not data:
         sys.exit("Radar ports not found. Check the USB cable, then run: ls -l /dev/serial/by-id/")
+    if len(cli) != 1 or len(data) != 1:
+        sys.exit("Multiple radars found. Use radar record or ROS launch with explicit CLI/data paths.")
     return cli[0], data[0]
 
 
@@ -62,36 +64,11 @@ def send_cfg(cli, path):
 
 def read_frames(data):
     """Yield (frame_number, [(x, y, z, v), ...]) for each complete radar frame."""
-    buf = bytearray()
+    from radar_navigation.protocol import Parser
+    parser = Parser()
     while True:
-        buf += data.read(data.in_waiting or 1)
-        idx = buf.find(MAGIC)
-        if idx < 0:
-            del buf[:-8]
-            continue
-        if len(buf) - idx < HEADER_LEN:
-            continue
-        (_ver, total_len, _plat, frame_num, _t, _nobj, num_tlv, _sub) = \
-            struct.unpack_from('<8I', buf, idx + 8)
-        if total_len < HEADER_LEN or total_len > 100000:
-            del buf[:idx + 8]          # corrupt header, resync
-            continue
-        if len(buf) - idx < total_len:
-            continue
-        frame = bytes(buf[idx:idx + total_len])
-        del buf[:idx + total_len]
-
-        points, off = [], HEADER_LEN
-        for _ in range(num_tlv):
-            if off + 8 > len(frame):
-                break
-            tlv_type, tlv_len = struct.unpack_from('<2I', frame, off)
-            off += 8
-            if tlv_type == TLV_DETECTED_POINTS:
-                for k in range(tlv_len // 16):
-                    points.append(struct.unpack_from('<4f', frame, off + 16 * k))
-            off += tlv_len
-        yield frame_num, points
+        for frame in parser.feed(data.read(data.in_waiting or 1)):
+            yield frame.number, [tuple(p) for p in frame.points]
 
 
 def main():
@@ -130,8 +107,11 @@ def main():
                 header.stamp = node.get_clock().now().to_msg()
                 header.frame_id = 'radar_link'
                 # TI: y forward, x right, z up  ->  ROS: x forward, y left, z up
-                ros_pts = [(y, -x, z) for x, y, z, _ in pts]
-                pub.publish(point_cloud2.create_cloud_xyz32(header, ros_pts))
+                from sensor_msgs.msg import PointField
+                fields = [PointField(name=name, offset=i*4, datatype=PointField.FLOAT32, count=1)
+                          for i, name in enumerate(('x', 'y', 'z', 'doppler'))]
+                ros_pts = [(y, -x, z, v) for x, y, z, v in pts]
+                pub.publish(point_cloud2.create_cloud(header, fields, ros_pts))
     except KeyboardInterrupt:
         pass
     finally:

@@ -8,3 +8,8 @@ recordings/
 data/
 *.db3
 *.mcap
+
+*.egg-info/
+build/
+install/
+log/

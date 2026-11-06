@@ -1,4 +1,45 @@
-# Radar point cloud viewer (AWR1843BOOST)
+# Radar-guided TurtleBot3 navigation
+
+Python radar acquisition/perception with ROS 2 Humble adapters for Jetson Orin Nano
+and TurtleBot3 Waffle Pi. Physical acquisition/viewer were verified by the project
+team; the new navigation integration is experimental and has not run on a robot.
+
+Architecture: one/two AWR1843BOOST → bounded serial parser → timestamped JSONL /
+PointCloud2 (x, y, z, Doppler) → filtering and fixed-frame fusion → occupancy /
+Nav2 obstacle observations. Existing live viewer functionality is preserved.
+
+## Offline installation and validation
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+python -m unittest discover -s tests -v
+python -m radar_navigation.evaluate
+python -m radar_navigation.simulate
+```
+
+Only pyserial is needed; core algorithms and tests use the standard library.
+See [Jetson deployment](docs/DEPLOYMENT.md), [experiment protocol](docs/EXPERIMENTS.md),
+and [engineering journal](PROGRESS.md) for exact status and remaining gates.
+
+The core includes TLV validation/resynchronization, metadata preservation, explicit
+dual-device acquisition, timestamped replay, finite/range/height/SNR gates,
+temporal voxel confirmation, radial-motion distinction, planar calibration,
+time-gated fusion, log-odds occupancy and an offline footprint-aware A* planner.
+Temporal persistence is a multipath rejection heuristic, not a validated multipath
+classifier. Default mapping marks occupied endpoints and leaves unobserved space
+unknown; optional ray clearing is an experimental assumption. Static obstacles
+are retained regardless of Doppler.
+
+ROS adapters publish raw/filtered points, metadata, health and occupancy, and
+require measured TF. Nav2 parameters are an overlay requiring integration with
+the robot's existing configuration. Autonomous physical navigation, radar-only
+localization, a stale-data motor watchdog and ROS runtime validation remain open.
+
+## Original live viewer guide
+
+### Radar point cloud viewer (AWR1843BOOST)
 
 See the live point cloud from the TI AWR1843BOOST radar plugged into this Jetson. The viewer runs on the Jetson, and you watch it in a web browser on your laptop.
 

@@ -1,0 +1,32 @@
+{
+  "lidar": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "endpoint_error_m": 0.01207484036272771,
+    "processing_ms": 0.07259708199853776
+  },
+  "single": {
+    "precision": 0.9759383176651693,
+    "recall": 1.0,
+    "endpoint_error_m": 0.08441269262004156,
+    "processing_ms": 0.032061553999483294
+  },
+  "dual": {
+    "precision": 0.9831548572761919,
+    "recall": 1.0,
+    "endpoint_error_m": 0.0698267566668093,
+    "processing_ms": 0.038374850993477594
+  },
+  "no_accumulation": {
+    "precision": 0.9099184149184149,
+    "recall": 0.7268292682926829,
+    "endpoint_error_m": 0.1828515253698441,
+    "processing_ms": 0.015548201995443378
+  },
+  "no_doppler": {
+    "precision": 0.8712039276966417,
+    "recall": 1.0,
+    "endpoint_error_m": 0.22354613499531145,
+    "processing_ms": 0.03396345199644202
+  }
+}
