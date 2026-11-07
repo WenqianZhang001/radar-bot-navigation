@@ -7,6 +7,7 @@ Radar-based navigation for a mobile robot, using a TI AWR1843BOOST mmWave radar 
 | Folder | What it is |
 | --- | --- |
 | [`radar_pointcloud/`](radar_pointcloud/) | Live point cloud viewer: configures the radar over USB and shows its points in a web browser. Setup and usage are in its [README](radar_pointcloud/README.md). |
+| [`ros2_ws/`](ros2_ws/) | ROS 2 workspace. [`awr1843_radar`](ros2_ws/src/awr1843_radar/) is the radar driver: it publishes the point cloud on `/radar/points` and the radar's position on the robot. |
 
 Each part of the project gets its own top-level folder with its own README.
 

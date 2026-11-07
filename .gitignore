@@ -8,3 +8,8 @@ recordings/
 data/
 *.db3
 *.mcap
+
+# colcon build output
+build/
+install/
+log/

@@ -1,0 +1,20 @@
+# Where the radar sits on the robot. This becomes the transform base_footprint -> radar_link.
+#
+# Measure from the point on the floor midway between the two drive wheels (TurtleBot3's
+# base_footprint; the caster balls are at the back) to the middle of the radar's antenna
+# area (the gold patch near the top of the red board).
+#
+# Measured 2026-11-07 on the robot: antennas 4.1 cm behind the robot's front edge,
+# 6.5 cm right of center, 18.5 cm above the floor; board upright, facing straight ahead.
+# The TurtleBot3 Waffle Pi model puts the front edge 7.7 cm ahead of the drive-wheel
+# midpoint, so x = 0.077 - 0.041 = 0.036.
+
+measured: true    # set to true once these numbers come from the real robot
+
+x: 0.036          # meters forward
+y: -0.065         # meters to the robot's left (negative = right)
+z: 0.185          # meters above the floor
+
+roll_deg: 0.0     # 180 if the board is mounted upside down
+pitch_deg: 0.0    # positive = radar tilted down
+yaw_deg: 0.0      # positive = radar turned to the left
