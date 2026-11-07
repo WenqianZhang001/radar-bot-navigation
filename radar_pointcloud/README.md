@@ -80,6 +80,24 @@ If any line says `[ERR]`, see [Troubleshooting](#troubleshooting).
 | `--cfg FILE` | `awr1843_profile.cfg` in this folder | Load different radar settings. |
 | `--port N` | `8765` | Serve the page on a different port. |
 | `--host ADDR` | `127.0.0.1` | Use `0.0.0.0` to let other computers open the page directly. |
+| `--ros` | off | Show the ROS 2 driver's point cloud instead of opening the radar (see below). |
+| `--topic NAME` | `/radar/points` | The topic that `--ros` shows. |
+
+## With the ROS 2 driver
+
+Only one program can open the radar. While the ROS 2 driver ([`../ros2_ws`](../ros2_ws/src/awr1843_radar/)) is running, start the viewer with `--ros`. It shows the driver's `/radar/points` topic, which is exactly what the rest of the ROS pipeline receives, and doesn't touch the radar.
+
+```bash
+# terminal 1: the driver
+cd ~/radar-bot-navigation/ros2_ws && source install/setup.bash
+ros2 launch awr1843_radar radar.launch.py
+
+# terminal 2: the viewer
+cd ~/radar-bot-navigation/radar_pointcloud
+python3 radar_viewer.py --ros
+```
+
+Both terminals need ROS 2 loaded; on the lab Jetson, every new terminal already has it. In this mode the radar settings come from the driver's own config (`ros2_ws/src/awr1843_radar/config/awr1843_profile.cfg`), and Ctrl+C in terminal 2 stops only the viewer.
 
 ## Open the page on your laptop
 
@@ -140,15 +158,16 @@ With the current `awr1843_profile.cfg`:
 | `Radar CLI is not answering` | Press the reset button on the radar board, wait a few seconds, and start again. If the board was just re-flashed, set its SOP jumpers back to functional mode. |
 | `[ERR]` lines at startup | Press reset on the radar and start again. If you edited the `.cfg` file, check that this firmware (mmWave SDK 3.04) supports those commands. |
 | `Address already in use` | A viewer is already running. Stop it with `pkill -f 'python3.*radar_viewer.py'`, or use `--port 8766`. |
-| `Could not exclusively lock port` | Another viewer is using the radar. Stop it as above. |
+| *The radar is busy* | Another viewer or the ROS 2 driver is using the radar. Stop it, or run the viewer with `--ros` to show the driver's data. |
 | `Permission denied` on a serial port | Add yourself to the `dialout` group (see [Before you start](#before-you-start)). |
 | Page says *Not connected to the Jetson* | The viewer stopped or your SSH tunnel closed. Restart whichever one is down. |
-| Page stays on *Waiting for radar frames…* | Look for `[ERR]` lines in the viewer's output, press reset on the radar, and restart the viewer. |
+| Page stays on *Waiting for radar frames…* | Look for `[ERR]` lines in the viewer's output, press reset on the radar, and restart the viewer. With `--ros`, check that the driver is running. |
 
-Only one program can use the radar at a time, so don't run `radar_test.py` while the viewer is running.
+Only one program can open the radar at a time: the viewer, `radar_test.py`, or the ROS 2 driver. To watch the driver's data, use `--ros`.
 
 ## How it works
 
 - The radar shows up as two serial ports: commands at 115200 baud (`…-if00`) and data at 921600 baud (`…-if03`).
 - `radar_viewer.py` sends `awr1843_profile.cfg` over the command port one character at a time (the radar drops characters when a whole line arrives at once), then reads frames from the data port.
+- With `--ros`, it skips the radar and subscribes to the driver's `/radar/points` topic instead.
 - It serves the page at `/` and pushes each frame to the browser as JSON at `/stream` (server-sent events). Nothing beyond Python 3 and pyserial is needed, and the page works without internet access.

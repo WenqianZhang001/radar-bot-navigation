@@ -17,7 +17,7 @@ source install/setup.bash        # needed in every new terminal
 ros2 launch awr1843_radar radar.launch.py
 ```
 
-Ctrl+C stops the radar. Only one program can use the radar at a time, so stop `radar_viewer.py` first.
+Ctrl+C stops the radar. Only one program can open the radar at a time, so stop `radar_viewer.py` first. To watch the driver's output in the browser, run the viewer with `--ros` (see [`radar_pointcloud/README.md`](../../../radar_pointcloud/README.md)).
 
 ## What it publishes
 
