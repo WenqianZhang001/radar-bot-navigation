@@ -1,0 +1,11 @@
+# Third/top plate, operator ruler measurements, 2026-11-08.
+# Parent base_footprint; child radar_link. Translation uncertainty +/- 0.01-0.02 m.
+# Angles visually estimated, not measured with an inclinometer.
+# Stationary validation only: plate security for movement is unverified.
+measured: true
+x: 0.150
+y: 0.060
+z: 0.190
+roll_deg: 0.0
+pitch_deg: 0.0
+yaw_deg: 0.0

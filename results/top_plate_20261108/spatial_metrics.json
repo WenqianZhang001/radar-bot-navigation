@@ -1,0 +1,393 @@
+{
+  "experiment": {
+    "experiment": "top_plate_20261108T1715",
+    "navigation_revision": "8077be6a5c1cbf996d914daf03203b3f5c6771ed",
+    "driver_revision": "9bee6926c19a846af50e3197726adbf625b8291b",
+    "mount": {
+      "parent": "base_footprint",
+      "child": "radar_link",
+      "translation_m": [
+        0.15,
+        0.06,
+        0.19
+      ],
+      "rpy_deg": [
+        0,
+        0,
+        0
+      ],
+      "translation_uncertainty_m": [
+        0.01,
+        0.02
+      ],
+      "orientation_measurement": "visual estimate; numerical uncertainty unknown",
+      "source": "operator ruler measurements",
+      "mechanical_security": "not validated for movement"
+    },
+    "robot_stationary_confirmed": true,
+    "reflector_absent_confirmed": true,
+    "created_unix": 1794176254.2380037,
+    "reflector": {
+      "center_m": [
+        1.15,
+        0.06,
+        0.19
+      ],
+      "center_reference": "deepest recessed foil point; operator-confirmed 1.00 m antenna-to-center distance",
+      "width_m": 0.3,
+      "height_m": 0.21,
+      "depth_m": 0.16,
+      "nominal_antenna_distance_m": 1.0,
+      "distance_reference_status": "CONFIRMED recessed center, not rim",
+      "orientation": "upright; opening aligned toward radar",
+      "height_m_approx": 0.19,
+      "support": "stacked cardboard boxes, added after baseline",
+      "other_clutter": "printed fiducial on cardboard behind and above foil, dimensions/position not surveyed",
+      "association_scope": "entire newly added target assembly, not foil-only",
+      "target_measurement_uncertainty_m": [
+        0.01,
+        0.02
+      ],
+      "height_measurement": "approximately 0.19 m; ruler-based",
+      "front_rim_x_m": 0.99
+    },
+    "comparison_conditions": {
+      "baseline": "new clean absent scene; foil and support boxes absent",
+      "reflector": "foil + newly added boxes + marker/cardboard; joint association only",
+      "planned_post_removal": "superseded: marker is attached to foil and was removed with it",
+      "post_removal": "support boxes retained unchanged; foil and attached marker/cardboard removed together; operator stepped clear",
+      "cleared": "all added objects removed: foil, attached marker/cardboard and support boxes; original scene unchanged"
+    },
+    "removal": {
+      "event": "removal_ack",
+      "unix": 1794177461.6539083,
+      "monotonic": 11040.424866092,
+      "removed": "foil reflector plus attached marker/cardboard",
+      "retained": "stacked support boxes unchanged",
+      "timestamp_basis": "approximate acknowledgement receipt; operator did not note exact second",
+      "operator_clear": true
+    },
+    "final_clear": {
+      "event": "clear_ack",
+      "unix": 1794177589.9314518,
+      "monotonic": 11168.702407534,
+      "removed": "all remaining stacked support boxes; foil and marker already removed",
+      "robot_and_original_environment_unchanged": true,
+      "operator_clear": true,
+      "timestamp_basis": "approximate acknowledgement receipt"
+    }
+  },
+  "phase_metrics": {
+    "baseline": {
+      "begin_unix": 1794176438.4606946,
+      "end_unix": 1794176468.607869,
+      "duration_s": 30.14717245099928,
+      "source_frames": 301,
+      "processed_frames": 301,
+      "source_hz": 10.000313870184476,
+      "processed_hz": 9.99896142054256,
+      "map_hz": 4.999998077181956,
+      "empty_source_frames": 0,
+      "source_points": 2200,
+      "occupied_cells_median": 7.0,
+      "occupied_cells_max": 10,
+      "stale_status_count": 0,
+      "target_roi": {
+        "points": 0,
+        "frames_with_return": 0,
+        "frame_fraction": 0.0
+      }
+    },
+    "reflector": {
+      "begin_unix": 1794177284.1864698,
+      "end_unix": 1794177314.3259804,
+      "duration_s": 30.139502026999253,
+      "source_frames": 301,
+      "processed_frames": 301,
+      "source_hz": 10.000387484347097,
+      "processed_hz": 9.999660851502266,
+      "map_hz": 4.9976616918819134,
+      "empty_source_frames": 0,
+      "source_points": 3424,
+      "occupied_cells_median": 13,
+      "occupied_cells_max": 20,
+      "stale_status_count": 0,
+      "target_roi": {
+        "points": 602,
+        "frames_with_return": 301,
+        "frame_fraction": 1.0,
+        "median_xyz_m": [
+          1.146959388256073,
+          0.06,
+          0.0772542828321457
+        ],
+        "median_vector_from_deepest_center_m": [
+          -0.003040611743927002,
+          0.0,
+          -0.11274571716785431
+        ],
+        "center_distance_p50_m": 0.14234325227582723,
+        "center_distance_p95_m": 0.1537534652107816,
+        "distance_outside_physical_box_p50_m": 0.04309730790101864,
+        "distance_outside_physical_box_p95_m": 0.08652890231708012
+      }
+    },
+    "post_removal": {
+      "begin_unix": 1794177461.6539083,
+      "end_unix": 1794177498.6230097,
+      "duration_s": 36.96909609700015,
+      "source_frames": 370,
+      "processed_frames": 370,
+      "source_hz": 10.000071493194273,
+      "processed_hz": 10.000311864468141,
+      "map_hz": 5.000093719789279,
+      "empty_source_frames": 0,
+      "source_points": 4217,
+      "occupied_cells_median": 11.0,
+      "occupied_cells_max": 15,
+      "stale_status_count": 0,
+      "target_roi": {
+        "points": 740,
+        "frames_with_return": 370,
+        "frame_fraction": 1.0,
+        "median_xyz_m": [
+          1.1370446324348449,
+          0.028641879968345163,
+          0.01339335232973099
+        ],
+        "median_vector_from_deepest_center_m": [
+          -0.01295536756515503,
+          -0.031358120031654835,
+          -0.176606647670269
+        ],
+        "center_distance_p50_m": 0.19946795057217584,
+        "center_distance_p95_m": 0.21592978524172574,
+        "distance_outside_physical_box_p50_m": 0.08387261238812124,
+        "distance_outside_physical_box_p95_m": 0.11960815930318623
+      }
+    },
+    "cleared": {
+      "begin_unix": 1794177589.9314518,
+      "end_unix": 1794177629.3078458,
+      "duration_s": 39.37639094400038,
+      "source_frames": 394,
+      "processed_frames": 394,
+      "source_hz": 9.999951957991433,
+      "processed_hz": 9.99945579272195,
+      "map_hz": 5.000855131811892,
+      "empty_source_frames": 0,
+      "source_points": 3210,
+      "occupied_cells_median": 6,
+      "occupied_cells_max": 11,
+      "stale_status_count": 0,
+      "target_roi": {
+        "points": 0,
+        "frames_with_return": 0,
+        "frame_fraction": 0.0
+      }
+    }
+  },
+  "notes": [
+    "Earlier recordings may contain the reflector; only the newly timestamped absent baseline is used.",
+    "No motion commanded. Mount translation is operator-surveyed +/- 1-2 cm; angle uncertainty is unquantified.",
+    "Concave-reflector envelope is a conservative box, not a point scatterer or exact surface model.",
+    "ROI padding is 0.12 m in x and 0.20 m in y/z; not an accuracy acceptance tolerance.",
+    "Voxel association is descriptive baseline contrast, not proof that every return is from the reflector.",
+    "Physical removal occurs between request and acknowledgement; chat receipt is not an exact action timestamp.",
+    "Present condition adds foil, boxes and attached marker/cardboard. Post-removal retains boxes only. Final cleared condition removes all added objects."
+  ],
+  "reflector_envelope_base_footprint_m": [
+    [
+      0.9899999999999999,
+      1.15
+    ],
+    [
+      -0.09,
+      0.21
+    ],
+    [
+      0.085,
+      0.295
+    ]
+  ],
+  "baseline_contrast_association": {
+    "voxel_size_m": 0.1,
+    "required_present_frame_fraction": 0.2,
+    "required_fraction_increase": 0.2,
+    "selected_voxels": 2,
+    "selected_points": 602,
+    "selected_voxel_centers_m": [
+      [
+        1.05,
+        0.05,
+        0.05
+      ],
+      [
+        1.25,
+        0.05,
+        0.05
+      ]
+    ],
+    "median_xyz_m": [
+      1.146959388256073,
+      0.06,
+      0.0772542828321457
+    ],
+    "median_minus_deepest_center_m": [
+      -0.003040611743927002,
+      0.0,
+      -0.11274571716785431
+    ],
+    "median_center_residual_norm_m": 0.11278671047366842,
+    "distance_outside_physical_box_p50_m": 0.04309730790101864,
+    "distance_outside_physical_box_p95_m": 0.08652890231708012,
+    "clusters": [
+      {
+        "voxel": [
+          10,
+          0,
+          0
+        ],
+        "phase": {
+          "reflector": {
+            "points": 301,
+            "median_xyz_m": [
+              1.060970389842987,
+              0.06,
+              0.09222510695457459
+            ],
+            "p05_xyz_m": [
+              1.0609445214271545,
+              0.06,
+              0.09198440104722977
+            ],
+            "p95_xyz_m": [
+              1.0609950065612792,
+              0.06,
+              0.09245478600263596
+            ]
+          },
+          "post_removal": {
+            "points": 370,
+            "median_xyz_m": [
+              1.0526932716369628,
+              0.03136867232620716,
+              0.035882877707481386
+            ],
+            "p05_xyz_m": [
+              1.052623775601387,
+              0.03136867232620716,
+              0.03547626003623009
+            ],
+            "p95_xyz_m": [
+              1.0527516603469849,
+              0.03136867232620716,
+              0.03622517824172974
+            ]
+          }
+        },
+        "grouping": "0.1 m forward range band through the predefined 3-D ROI; includes height changes between conditions"
+      },
+      {
+        "voxel": [
+          12,
+          0,
+          0
+        ],
+        "phase": {
+          "reflector": {
+            "points": 301,
+            "median_xyz_m": [
+              1.2330928087234496,
+              0.06,
+              0.06126049399375916
+            ],
+            "p05_xyz_m": [
+              1.2329743146896361,
+              0.06,
+              0.06026675045490265
+            ],
+            "p95_xyz_m": [
+              1.2331938982009887,
+              0.06,
+              0.06211351096630097
+            ]
+          },
+          "post_removal": {
+            "points": 370,
+            "median_xyz_m": [
+              1.2216657638549804,
+              0.025915087610483167,
+              -0.010086720287799833
+            ],
+            "p05_xyz_m": [
+              1.2214592218399047,
+              0.025915087610483167,
+              -0.011189778745174406
+            ],
+            "p95_xyz_m": [
+              1.2218559205532074,
+              0.025915087610483167,
+              -0.009065443128347395
+            ]
+          }
+        },
+        "grouping": "0.1 m forward range band through the predefined 3-D ROI; includes height changes between conditions"
+      }
+    ],
+    "interpretation": "Assembly-associated candidate modes; pooled median can lie between distinct modes and is NOT point-target range accuracy."
+  },
+  "target_exclusive_map_cells": {
+    "indices": [
+      20110,
+      20112
+    ],
+    "selection": "Within physical xy footprint plus 0.1 m margin; occupied >=50% present maps and <=5% baseline maps."
+  },
+  "removal": {
+    "request_unix": 1794177331.1475368,
+    "ack_unix": 1794177461.6539083,
+    "action_time_uncertainty_s": 130.5063758819997,
+    "cells": [
+      {
+        "index": 20110,
+        "first_not_occupied_after_ack_s": null,
+        "occupied_fraction_after_ack": 1.0,
+        "last_occupied_after_ack_s": 36.77480306600046
+      },
+      {
+        "index": 20112,
+        "first_not_occupied_after_ack_s": null,
+        "occupied_fraction_after_ack": 1.0,
+        "last_occupied_after_ack_s": 36.77480306600046
+      }
+    ],
+    "all_selected_cells_not_occupied_after_ack_s": null,
+    "note": "Receipt-timed physical removal with acquisition continuing; no serial stop used. First disappearance is not proof of permanent absence; recurrence fractions retained.",
+    "boxes_only_cell_occupied_fractions": {
+      "20110": 1.0,
+      "20112": 1.0
+    }
+  },
+  "final_clear": {
+    "request_unix": 1794177531.3628092,
+    "ack_unix": 1794177589.9314518,
+    "action_time_uncertainty_s": 58.568641496000055,
+    "cells": [
+      {
+        "index": 20110,
+        "first_not_occupied_after_ack_s": 0.10048502500103496,
+        "occupied_fraction_after_ack": 0.0,
+        "last_occupied_relative_to_ack_s": -26.104510268000013
+      },
+      {
+        "index": 20112,
+        "first_not_occupied_after_ack_s": 0.10048502500103496,
+        "occupied_fraction_after_ack": 0.0,
+        "last_occupied_relative_to_ack_s": -26.70443373299895
+      }
+    ],
+    "all_selected_cells_not_occupied_after_ack_s": 0.10048502500103496,
+    "note": "All added objects absent; acquisition continues. Absence of occupied evidence becomes unknown, not demonstrated free space."
+  }
+}

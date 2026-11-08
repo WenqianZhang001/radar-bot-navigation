@@ -1,0 +1,73 @@
+{
+  "method": "Replay accepted metadata through unchanged Filter to identify fresh (not accumulated) evidence; read actual bag OccupancyGrid cell values and header times.",
+  "physical_removal_time": "Unknown exact second, bounded by request and acknowledgement; evidence cessation is an observed proxy, not exact operator action.",
+  "cells": [
+    {
+      "index": 20110,
+      "center_base_footprint_m": [
+        1.0500000000000007,
+        0.05000000000000071
+      ],
+      "last_fresh_evidence": {
+        "stamp_ns": 1794177562343686586,
+        "point_base_footprint": [
+          1.0627017259597777,
+          0.06,
+          0.10998402774333954,
+          -0.16231007874011993
+        ],
+        "metadata_receipt_unix": 1794177562.3680413
+      },
+      "first_unknown_map": {
+        "receipt_ns": 1794177564013097820,
+        "stamp_ns": 1794177563982499923,
+        "values": {
+          "20110": -1,
+          "20112": -1
+        }
+      },
+      "expiry_after_last_fresh_evidence_s": 1.638813337,
+      "occupied_recurrences_after_expiry": 0,
+      "expiry_relative_to_clear_ack_s": -25.948951959609985
+    },
+    {
+      "index": 20112,
+      "center_base_footprint_m": [
+        1.25,
+        0.05000000000000071
+      ],
+      "last_fresh_evidence": {
+        "stamp_ns": 1794177561853576493,
+        "point_base_footprint": [
+          1.2210113048553466,
+          0.025915087610483167,
+          -0.01356050133705139,
+          0.0
+        ],
+        "metadata_receipt_unix": 1794177561.8676264
+      },
+      "first_unknown_map": {
+        "receipt_ns": 1794177563413475764,
+        "stamp_ns": 1794177563382474057,
+        "values": {
+          "20110": 98,
+          "20112": -1
+        }
+      },
+      "expiry_after_last_fresh_evidence_s": 1.528897564,
+      "occupied_recurrences_after_expiry": 0,
+      "expiry_relative_to_clear_ack_s": -26.548977851867676
+    }
+  ],
+  "all_selected_unknown_after_latest_evidence_s": 1.638813337,
+  "first_all_unknown_map": {
+    "receipt_ns": 1794177564013097820,
+    "stamp_ns": 1794177563982499923,
+    "values": {
+      "20110": -1,
+      "20112": -1
+    }
+  },
+  "last_target_area_evidence_utc": "2026-11-08T22:39:22.343687+00:00",
+  "first_all_unknown_utc": "2026-11-08T22:39:23.982500+00:00"
+}

@@ -1,0 +1,78 @@
+{
+  "experiment": "top_plate_20261108T1715",
+  "navigation_revision": "8077be6a5c1cbf996d914daf03203b3f5c6771ed",
+  "driver_revision": "9bee6926c19a846af50e3197726adbf625b8291b",
+  "mount": {
+    "parent": "base_footprint",
+    "child": "radar_link",
+    "translation_m": [
+      0.15,
+      0.06,
+      0.19
+    ],
+    "rpy_deg": [
+      0,
+      0,
+      0
+    ],
+    "translation_uncertainty_m": [
+      0.01,
+      0.02
+    ],
+    "orientation_measurement": "visual estimate; numerical uncertainty unknown",
+    "source": "operator ruler measurements",
+    "mechanical_security": "not validated for movement"
+  },
+  "robot_stationary_confirmed": true,
+  "reflector_absent_confirmed": true,
+  "created_unix": 1794176254.2380037,
+  "reflector": {
+    "center_m": [
+      1.15,
+      0.06,
+      0.19
+    ],
+    "center_reference": "deepest recessed foil point; operator-confirmed 1.00 m antenna-to-center distance",
+    "width_m": 0.3,
+    "height_m": 0.21,
+    "depth_m": 0.16,
+    "nominal_antenna_distance_m": 1.0,
+    "distance_reference_status": "CONFIRMED recessed center, not rim",
+    "orientation": "upright; opening aligned toward radar",
+    "height_m_approx": 0.19,
+    "support": "stacked cardboard boxes, added after baseline",
+    "other_clutter": "printed fiducial on cardboard behind and above foil, dimensions/position not surveyed",
+    "association_scope": "entire newly added target assembly, not foil-only",
+    "target_measurement_uncertainty_m": [
+      0.01,
+      0.02
+    ],
+    "height_measurement": "approximately 0.19 m; ruler-based",
+    "front_rim_x_m": 0.99
+  },
+  "comparison_conditions": {
+    "baseline": "new clean absent scene; foil and support boxes absent",
+    "reflector": "foil + newly added boxes + marker/cardboard; joint association only",
+    "planned_post_removal": "superseded: marker is attached to foil and was removed with it",
+    "post_removal": "support boxes retained unchanged; foil and attached marker/cardboard removed together; operator stepped clear",
+    "cleared": "all added objects removed: foil, attached marker/cardboard and support boxes; original scene unchanged"
+  },
+  "removal": {
+    "event": "removal_ack",
+    "unix": 1794177461.6539083,
+    "monotonic": 11040.424866092,
+    "removed": "foil reflector plus attached marker/cardboard",
+    "retained": "stacked support boxes unchanged",
+    "timestamp_basis": "approximate acknowledgement receipt; operator did not note exact second",
+    "operator_clear": true
+  },
+  "final_clear": {
+    "event": "clear_ack",
+    "unix": 1794177589.9314518,
+    "monotonic": 11168.702407534,
+    "removed": "all remaining stacked support boxes; foil and marker already removed",
+    "robot_and_original_environment_unchanged": true,
+    "operator_clear": true,
+    "timestamp_basis": "approximate acknowledgement receipt"
+  }
+}

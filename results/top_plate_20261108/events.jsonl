@@ -1,0 +1,24 @@
+{"event": "mount_measurement_received", "unix": 1794176254.2383442, "monotonic": 9833.009299225, "translation_m": [0.15, 0.06, 0.19], "rpy_deg": [0, 0, 0]}
+{"event": "reflector_absence_correction", "unix": 1794176341.3432102, "monotonic": 9920.114155629, "note": "Operator states reflector removed NOW; earlier data may contain reflector and is not a clean baseline. No baseline started yet."}
+{"event": "cloud_started", "unix": 1794176341.3454158, "monotonic": 9920.116359699, "pid": 4592, "command": ["ros2", "launch", "radar_navigation", "cloud.launch.py"]}
+{"event": "driver_started", "unix": 1794176343.355391, "monotonic": 9922.126341168, "pid": 4610, "command": ["ros2", "launch", "awr1843_radar", "radar.launch.py", "mount_file:=/home/tejas/radar_integration_artifacts/top_plate_20261108T1715/radar_mount_top_plate.yaml"]}
+{"event": "absent_scene_settling_start", "unix": 1794176345.3594646, "monotonic": 9924.130417596}
+{"event": "absent_scene_settling_complete", "unix": 1794176350.3660944, "monotonic": 9929.137045818, "minimum_seconds": 5}
+{"event": "bag_started", "unix": 1794176436.3438103, "monotonic": 10015.114768415, "pid": 4745, "command": ["ros2", "bag", "record", "-o", "/home/tejas/radar_integration_artifacts/top_plate_20261108T1715/experiment_bag", "/radar/points", "/radar_front/points_raw", "/radar_front/points", "/radar_front/metadata", "/radar_front/status", "/radar_front/occupancy", "/tf_static", "/tf"]}
+{"event": "baseline_begin", "unix": 1794176438.4606946, "monotonic": 10017.23164953}
+{"event": "baseline_end", "unix": 1794176468.607869, "monotonic": 10047.378821981}
+{"event": "target_assembly_placement_ack", "unix": 1794177279.0771098, "monotonic": 10857.848063489, "distance_reference": "unconfirmed", "foil_and_boxes_added_after_baseline": true, "marker_behind_above": true}
+{"event": "reflector_begin", "unix": 1794177284.1864698, "monotonic": 10862.957430953}
+{"event": "survey_reference_confirmed", "unix": 1794177305.3153267, "monotonic": 10884.086282694, "center_m": [1.15, 0.06, 0.19], "front_rim_x_m": 0.99, "uncertainty_m": [0.01, 0.02]}
+{"event": "reflector_end", "unix": 1794177314.3259804, "monotonic": 10893.09693298}
+{"event": "removal_request", "unix": 1794177331.1475368, "monotonic": 10909.91849021, "action": "remove only foil; retain support boxes and marker/cardboard", "recording_continues": true}
+{"event": "removal_ack", "unix": 1794177461.6539083, "monotonic": 11040.424866092, "removed": "foil reflector plus attached marker/cardboard", "retained": "stacked support boxes unchanged", "timestamp_basis": "approximate acknowledgement receipt; operator did not note exact second", "operator_clear": true}
+{"event": "post_removal_begin", "unix": 1794177461.6539083, "monotonic": 11040.424866092, "condition": "boxes only; foil and marker/cardboard removed"}
+{"event": "post_removal_end", "unix": 1794177498.6230097, "monotonic": 11077.393962189}
+{"event": "clear_request", "unix": 1794177531.3628092, "monotonic": 11110.133766038, "action": "remove remaining support boxes; preserve robot and original scene"}
+{"event": "clear_ack", "unix": 1794177589.9314518, "monotonic": 11168.702407534, "removed": "all remaining stacked support boxes; foil and marker already removed", "robot_and_original_environment_unchanged": true, "operator_clear": true, "timestamp_basis": "approximate acknowledgement receipt"}
+{"event": "cleared_begin", "unix": 1794177589.9314518, "monotonic": 11168.702407534, "condition": "entire added target assembly absent; original environment unchanged"}
+{"event": "cleared_end", "unix": 1794177629.3078458, "monotonic": 11208.078798478}
+{"event": "driver_stop_requested", "unix": 1794177670.7677763, "monotonic": 11249.538720686, "pid": 4610}
+{"event": "cloud_stop_requested", "unix": 1794177673.7739828, "monotonic": 11252.544929641, "pid": 4592}
+{"event": "bag_stop_requested", "unix": 1794177676.779936, "monotonic": 11255.55088456, "pid": 4745}

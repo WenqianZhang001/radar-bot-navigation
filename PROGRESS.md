@@ -1,20 +1,30 @@
 # Engineering progress
 
 ## Current status
-The original serial acquisition and browser viewer were verified on physical
-hardware by the project team. The new single-radar ROS pipeline now builds and
-runs under ROS 2 Humble in a container. Integration tests exercise serial
-pseudo-terminals, delayed odometry TF, processed clouds, aging occupancy,
-operator command gating, localization loss and the actual Nav2 local costmap.
-These tests do not establish physical Jetson performance or motor stopping.
-The reactive demo defaults to dry output and requires an operator enable lease.
+The external-driver navigation pipeline was deployed to the physical Jetson at
+8077be6 with Wenqian's local driver/viewer commit 9bee692 preserved. The separate
+overlay built; 26 offline tests and the required domain-89 cloud-input middleware
+test passed. Real radar clouds/processed output run near 10 Hz and occupancy near
+5 Hz. Earlier recordings are not a surveyed empty-scene baseline.
 
-Immediate priority: follow docs/JETSON_DEMO.md on the Jetson, measure the mount,
-verify real serial/TF rates and obstacle placement, test stopping with wheels
-lifted, then conduct supervised low-speed trials. Nav2 goal navigation uses
-prior-map AMCL (LiDAR-assisted localization) and radar local obstacle perception.
-Full Nav2 actions, physical stopping, dual-radar occupancy/control and radar-only
-localization remain unverified. The cloud host has no radar USB or Jetson access.
+The final top-plate configuration now has an operator-surveyed mount of
+(0.150, 0.060, 0.190) m from base_footprint, nominal zero angles, translation
+uncertainty +/- 1-2 cm and unmeasured visual angle uncertainty. A phased stationary
+physical experiment recorded clean empty, foil/marker/boxes present, boxes-only,
+and all-added-objects-removed conditions. The two target-area map cells stayed
+occupied with boxes retained, then expired to unknown 1.529/1.639 s after their
+last fresh evidence when boxes were removed, with acquisition continuing.
+
+Mixed extended-target returns do not establish isolated foil accuracy: stable
+forward groups were near 1.061 and 1.233 m versus a 1.150 m recessed center, with
+elevation residuals and support/marker ambiguity. Detailed results, plots, limits,
+and the explicit mount override are in
+[the physical report](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md).
+
+No robot motion was commanded. Mount security, spatial calibration across
+multiple positions, physical stopping, full Nav2 actions, dual-radar control and
+radar-only localization remain unverified. Secure/recheck the mount and use an
+unchanged-support surveyed reflector experiment before movement validation.
 
 ## Integration update — 2026-11-08
 Both remote main revisions match the project handoff (`facbc10` and Wenqian's
@@ -153,3 +163,31 @@ docs/JETSON_INTEGRATION.md. All 26 offline tests pass; compilation and diff chec
 pass. Added a real ROS middleware test to the existing Humble CI suite; it has
 not run locally because this cloud host lacks ROS. Physical validation remains
 for Jetson deployment after XDS110 is available.
+
+### 2026-11-08 — Physical Jetson integration and top-plate experiment
+- Preserved deployed driver 9bee692 and all earlier artifacts; deployed navigation
+  8077be6 to a separate overlay. Build, 26 offline tests and required middleware
+  test passed. The earlier input-stop measurement gave stale health at 0.547 s
+  and all-map expiry at 1.688 s; it was not physical reflector removal.
+- After the radar moved to the third plate, obtained new operator measurements
+  (0.150,0.060,0.190) m with nominal zero angles. Preserved old calibration and
+  supplied a separate mount_file to the existing driver; one mount TF publisher
+  verified. Plate security for movement was explicitly not assumed.
+- Honored the operator's absent-scene correction before a fresh 30 s baseline.
+  Added boxes/foil/attached marker afterward, then removed foil+marker together,
+  retained boxes for a separate phase, and finally removed boxes. Entire session
+  recorded without motor/control launches or movement commands.
+- Stable source/processed output ~10 Hz, maps ~5 Hz, no stale physical-phase
+  health. ROI returns: 0/301 baseline frames, 301/301 full-assembly frames,
+  370/370 boxes-only frames, 0/394 final absent frames. Two map cells remained
+  occupied in every boxes-only map; after final clearing actual bag values became
+  unknown 1.529/1.639 s after last fresh evidence, with no later recurrence.
+- Two spatial modes near (1.061,0.060,0.092) and (1.233,0.060,0.061) m. Their
+  recessed-center residuals are not point-target sensor error. Do not interpret
+  the between-modes pooled median as millimeter accuracy. Supports, attached
+  marker, extended foil surface, survey/tilt uncertainty and multipath remain
+  confounders. Exact removal seconds were not observed; report evidence-to-expiry.
+- Saved finalized 285.9 MiB / 1,236.054 s bag, full metrics/logs and plots under
+  /home/tejas/radar_integration_artifacts/top_plate_20261108T1715. Added compact
+  results, mount reference and reproducible analysis scripts to this repository.
+  All experiment processes stopped; no movement validation claimed.

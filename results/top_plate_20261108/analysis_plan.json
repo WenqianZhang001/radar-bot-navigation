@@ -1,0 +1,17 @@
+{
+  "source": "source clouds transformed using operator mount; processed clouds analyzed separately",
+  "phase_windows": "30 s clean baseline; 30 s confirmed stationary reflector; >=30 s after removal acknowledgement",
+  "reflector_reference": "deepest central foil point; conservative physical bounding box extends depth toward radar and half width/height sideways/vertical",
+  "roi_padding_m": [
+    0.12,
+    0.2,
+    0.2
+  ],
+  "contrast_voxel_size_m": 0.1,
+  "contrast_min_present_frame_fraction": 0.2,
+  "contrast_min_fraction_increase": 0.2,
+  "exclusive_map_cell_min_present_fraction": 0.5,
+  "exclusive_map_cell_max_baseline_fraction": 0.05,
+  "physical_removal_timestamp": "bounded between removal request and operator acknowledgement; no exact action timing claimed",
+  "occupancy_semantics": "TTL to unknown; clutter can refresh cells after target removal"
+}
