@@ -6,7 +6,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/radar_navigation']),
         ('share/radar_navigation', ['package.xml', 'awr1843_profile.cfg']),
-        ('share/radar_navigation/launch', ['launch/radar.launch.py', 'launch/navigation.launch.py', 'launch/demo.launch.py']),
+        ('share/radar_navigation/launch', ['launch/radar.launch.py', 'launch/navigation.launch.py', 'launch/demo.launch.py', 'launch/cloud.launch.py']),
         ('share/radar_navigation/config', ['config/nav2_radar.yaml'])],
     entry_points={'console_scripts': [
         'radar=radar_navigation.cli:main',

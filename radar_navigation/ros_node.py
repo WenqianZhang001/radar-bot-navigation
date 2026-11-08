@@ -7,6 +7,7 @@ import time
 
 from .core import Filter, Grid, Pose, ros_points
 from .io import acquire, replay
+from .cloud_input import decode_cloud
 
 
 def main():
@@ -14,7 +15,7 @@ def main():
     from rclpy.node import Node
     from rclpy.time import Time
     from rclpy.duration import Duration
-    from rclpy.qos import QoSProfile, DurabilityPolicy
+    from rclpy.qos import QoSProfile, DurabilityPolicy, qos_profile_sensor_data
     from sensor_msgs.msg import PointCloud2, PointField
     from sensor_msgs_py.point_cloud2 import create_cloud
     from std_msgs.msg import Header, String
@@ -25,7 +26,7 @@ def main():
         def __init__(self):
             super().__init__('radar_pipeline')
             defaults = dict(cli='', data='', cfg='', sensor='radar_front',
-                            replay='', frame_id='radar_front', fixed_frame='odom',
+                            input_topic='', replay='', frame_id='radar_front', fixed_frame='odom',
                             min_snr=0., confirmations=1, clear_rays=False,
                             obstacle_ttl=1.5, max_frame_age=.3)
             self.settings = {k: self.declare_parameter(k, v).value for k, v in defaults.items()}
@@ -49,8 +50,25 @@ def main():
             self.create_timer(.02, self.process)
             self.create_timer(.1, self.health)
             self.create_timer(.2, self.publish_map)
-            self.thread = threading.Thread(target=self.worker, daemon=True)
-            self.thread.start()
+            self.thread = None
+            self.sequence = 0
+            if self.settings['input_topic']:
+                if any(self.settings[k] for k in ('cli', 'data', 'replay')):
+                    raise ValueError('Cloud input cannot be combined with serial or replay')
+                self.subscription = self.create_subscription(PointCloud2,
+                    self.settings['input_topic'], self.receive_cloud, qos_profile_sensor_data)
+            else:
+                self.thread = threading.Thread(target=self.worker, daemon=True)
+                self.thread.start()
+
+        def receive_cloud(self, msg):
+            try:
+                frame = decode_cloud(msg, self.settings['sensor'],
+                                     self.settings['frame_id'], self.sequence)
+                self.sequence += 1
+                self.inbox.put_nowait(frame)
+            except (ValueError, queue.Full) as exc:
+                self.get_logger().warning('Cloud rejected: '+str(exc), throttle_duration_sec=2.)
 
         def worker(self):
             def consume(frames):
@@ -144,6 +162,7 @@ def main():
     finally:
         begin_cleanup()
         node.stop.set()
-        node.thread.join(timeout=5.)
+        if node.thread is not None:
+            node.thread.join(timeout=5.)
         node.destroy_node()
         rclpy.shutdown()

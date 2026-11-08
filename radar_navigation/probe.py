@@ -34,7 +34,13 @@ def main():
             ages.append((node.get_clock().now().nanoseconds-Time.from_msg(msg.header.stamp).nanoseconds)/1e6)
     def metadata(msg):
         nonlocal previous
-        number=json.loads(msg.data)['number']
+        frame=json.loads(msg.data)
+        if frame.get('metadata', {}).get('hardware_frame_number_available') is False:
+            counts['frame_gaps'] = None
+            counts['frame_resets'] = None
+            previous = None
+            return
+        number=frame['number']
         if previous is not None:
             delta=(number-previous) % (2**32)
             if delta > 2**31:

@@ -16,6 +16,21 @@ prior-map AMCL (LiDAR-assisted localization) and radar local obstacle perception
 Full Nav2 actions, physical stopping, dual-radar occupancy/control and radar-only
 localization remain unverified. The cloud host has no radar USB or Jetson access.
 
+## Integration update — 2026-11-08
+Both remote main revisions match the project handoff (`facbc10` and Wenqian's
+`528bccd`). Source inspection confirms that a topic remap alone cannot connect
+her ROS-coordinate cloud to the serial-owning perception node. Proposed path:
+retain her deployed acquisition package and measured base_footprint transform,
+add a subscriber input mode, and preserve Doppler/quality and hardware metadata.
+See [integration findings](docs/INTEGRATION.md). Her driver currently discards
+hardware frame number at publication. Driver/viewer exclusive serial ownership
+needs inspection on the actual Jetson before deployment changes.
+
+Next physical milestone: stationary real-radar occupancy with recorded surveyed
+obstacles. Blocker: this cloud environment has no configured Jetson VPN access;
+ROS is also absent locally. Added a bounded read-only Jetson inventory script,
+shell-syntax checked only. No physical tests or new ROS integration tests ran.
+
 ## Chronological journal
 ### Prior work (dates not recorded)
 - Initially planned Unitree Go2 navigation; switched to TurtleBot3 Waffle Pi to protect fragile radar hardware.
@@ -125,3 +140,16 @@ TI coordinates are x right, y forward, z up; ROS sensor coordinates are x forwar
   Humble/Nav2 integration tests passed, with no skipped tests. A second probe run
   measured ~9.87 Hz and 84.4 ms p95; dropout output stopped in 0.250 s.
   Recorded representative runtime evidence is results/humble_runtime.json.
+
+### 2026-11-08 — External driver integration
+Jetson inventory reports local commit 9bee692 with a ROS subscriber viewer,
+resolving the earlier exclusive-port concern. Preserve that commit: GitHub still
+reports 528bccd. No radar USB or active ROS graph was observed during inventory.
+Added subscriber input to the perception node, stationary cloud launch without
+serial/TF/control ownership, schema validation, coordinate/Doppler conversion,
+quality metadata and explicit unavailable hardware-counter reporting. Positive
+SNR thresholds reject unknown quality. Added deployment instructions in
+docs/JETSON_INTEGRATION.md. All 26 offline tests pass; compilation and diff checks
+pass. Added a real ROS middleware test to the existing Humble CI suite; it has
+not run locally because this cloud host lacks ROS. Physical validation remains
+for Jetson deployment after XDS110 is available.

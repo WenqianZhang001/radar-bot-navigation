@@ -52,7 +52,8 @@ class Filter:
             if not self.min_range <= distance <= self.max_range:
                 continue
             info = frame.metadata.get("side_info_db", [])
-            if info and info[i][0] < self.min_snr:
+            if info and (info[i][0] < self.min_snr or
+                         (self.min_snr > 0 and not math.isfinite(info[i][0]))):
                 continue
             world = pose.apply(p)
             if not self.min_z <= world[2] <= self.max_z:

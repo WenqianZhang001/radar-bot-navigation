@@ -11,6 +11,15 @@ Architecture: one/two AWR1843BOOST → bounded serial parser → timestamped JSO
 PointCloud2 (x, y, z, Doppler) → filtering and fixed-frame fusion → occupancy /
 Nav2 obstacle observations. Existing live viewer functionality is preserved.
 
+## Deployed ROS driver integration
+
+For Wenqian’s existing driver and ROS subscriber viewer, use the
+[Jetson integration procedure](docs/JETSON_INTEGRATION.md). The new
+`cloud.launch.py` consumes `/radar/points` without opening serial ports or
+publishing duplicate mount transforms. Its default is stationary occupancy
+in `base_footprint`; moving-platform mapping requires `fixed_frame:=odom`
+and a working odometry TF chain.
+
 ## Offline installation and validation
 
 ```bash
