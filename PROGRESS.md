@@ -701,3 +701,17 @@ records no additional physical trial or motion.
   physical direction/stop tests and final dry sensor-loss/TF/rate checks before
   publication. Post-test edits only update docs/compact results. Main publication
   uses expected-head lease and preserves separate fix/humble-nav2-teardown branch.
+
+### 2026-11-08 — Published and installed corrected hardware integration
+- Runtime integration published to main at 9463e1cae209d86a89a9d48c88961c60c623584a,
+  tree fb167159ae95a79ac55313a06752dcb3ccdf67e8. Pre-deployment comparison verified
+  all runtime/config/launch/tested script bytes unchanged from physical validation.
+  Both working trees synchronized and clean. Published ROS install build passed
+  in 4.04 s; base_frame_adapter/base_watchdog and all runtime entry points installed.
+- published_alignment_source_manifest.json in artifact root records per-file SHA256,
+  tested runtime identity, physical-direction confirmation and all three serial
+  ports unowned after shutdown. Wenqian checkout remains clean at full
+  9bee6926c19a846af50e3197726adbf625b8291b. Nav2 branch remains 4d3fb7d unchanged.
+- This final journal-only publication changes no tested runtime. All motor command
+  processes are stopped, OpenCR still powered at 12.04 V, measured wheels zero.
+  Floor experiment remains prepared but explicitly unauthorized, not performed.
