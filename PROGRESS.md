@@ -1,30 +1,26 @@
 # Engineering progress
 
 ## Current status
-The external-driver navigation pipeline was deployed to the physical Jetson at
-8077be6 with Wenqian's local driver/viewer commit 9bee692 preserved. The separate
-overlay built; 26 offline tests and the required domain-89 cloud-input middleware
-test passed. Real radar clouds/processed output run near 10 Hz and occupancy near
-5 Hz. Earlier recordings are not a surveyed empty-scene baseline.
+One canonical installable ROS package now contains Wenqian's verified acquisition
+and subscriber viewer, cloud perception, occupancy, calibration and launch. On
+the Jetson use ~/radar_integration_ws and system.launch.py (or the foreground
+start_stationary.sh helper); the old driver workspace is archival, not sourced.
+The default top-plate TF is (0.150,0.060,0.190) m, nominal zero angles, one publisher.
 
-The final top-plate configuration now has an operator-surveyed mount of
-(0.150, 0.060, 0.190) m from base_footprint, nominal zero angles, translation
-uncertainty +/- 1-2 cm and unmeasured visual angle uncertainty. A phased stationary
-physical experiment recorded clean empty, foil/marker/boxes present, boxes-only,
-and all-added-objects-removed conditions. The two target-area map cells stayed
-occupied with boxes retained, then expired to unknown 1.529/1.639 s after their
-last fresh evidence when boxes were removed, with acquisition continuing.
+Clean build and 29 offline tests pass. Required stationary middleware checks and
+a normal non-symlink installation pass. Real 15.02 s smoke measured 150 source/raw/
+processed clouds each (~10 Hz), 75 maps (~5 Hz), healthy status and clean stop.
+Broader middleware: five pass, one optional native Nav2 teardown failure remains;
+do not claim the entire suite passes. See docs/NAV2_NATIVE_TEARDOWN.md.
 
-Mixed extended-target returns do not establish isolated foil accuracy: stable
-forward groups were near 1.061 and 1.233 m versus a 1.150 m recessed center, with
-elevation residuals and support/marker ambiguity. Detailed results, plots, limits,
-and the explicit mount override are in
-[the physical report](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md).
-
-No robot motion was commanded. Mount security, spatial calibration across
-multiple positions, physical stopping, full Nav2 actions, dual-radar control and
-radar-only localization remain unverified. Secure/recheck the mount and use an
-unchanged-support surveyed reflector experiment before movement validation.
+Physical November 8 extended-target results and limits remain below and in
+[the report](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md): support boxes sustained
+target-area occupancy after foil/marker removal; all-added-object removal yielded
+unknown-cell expiry at 1.529/1.639 s from fresh evidence. Spatial return modes and
+survey/tilt/support ambiguity prevent a precision foil-accuracy claim.
+No robot motion has been commanded. Next: secure/survey the mount, validate real
+wheel odometry and base watchdog, resolve Nav2 teardown, then separately authorize
+and measure supervised low-speed reactive control and stopping distances.
 
 ## Integration update — 2026-11-08
 Both remote main revisions match the project handoff (`facbc10` and Wenqian's
@@ -191,3 +187,140 @@ for Jetson deployment after XDS110 is available.
   /home/tejas/radar_integration_artifacts/top_plate_20261108T1715. Added compact
   results, mount reference and reproducible analysis scripts to this repository.
   All experiment processes stopped; no movement validation claimed.
+
+### 2026-11-08 — Canonical-system consolidation: inventory and design
+- Reinspected clean Jetson checkouts: canonical 79417f0 and Wenqian local 9bee692;
+  GitHub heads remain 79417f0 and 528bccd respectively. XDS110 if00/if03 are
+  present and unowned; no radar/robot processes active. No motion authorized.
+- Chose one ROS package and one primary workspace: radar_navigation in
+  ~/radar_integration_ws. Integrating the physically verified hardware driver
+  into radar_navigation/driver and the 9bee692 ROS-subscriber viewer. Keep the
+  proven /radar/points interface and the external-cloud perception pipeline.
+- Preserve Wenqian's exact commit ancestry as a second merge parent, not just
+  an unattributed source copy. Selected files are imported into canonical layout;
+  her historical root tree is not installed as a second project. Original checkout
+  and experiment artifacts remain archival references, not runtime dependencies.
+- Default mount becomes (0.150,0.060,0.190) m, nominal zero angles. Plan one
+  stationary system.launch.py owning acquisition, mount TF and cloud perception,
+  with optional subscriber-only viewer. Existing motion/replay launches remain
+  experimental; stationary launch starts no controller or command publisher.
+- Build/test must use /opt/ros/humble plus this package only, excluding the old
+  awr1843_radar overlay. Packaging/install closure and a complete-launch PTY test
+  are required before real radar smoke validation. Results pending at this stage.
+
+### 2026-11-08 — Canonical-system consolidation: implementation
+- Imported Wenqian's hardware driver and 9bee692 viewer into one package.
+  Retained packet framing and source x/y/z/velocity/snr/noise schema; driver now
+  resolves its configuration from radar_navigation. Live perception consumes
+  that cloud only; removed its alternate serial acquisition worker. JSONL replay
+  and standalone offline recording remain explicit research tools.
+- Added system.launch.py with the default measured top-plate mount, one TF, one
+  serial owner, filtering/occupancy/health, optional ROS-only viewer, and shutdown
+  of the complete launch when a required process exits. radar.launch.py is an
+  alias. demo.launch.py now composes the same acquisition path for future dry
+  control research rather than another serial/TF implementation.
+- Added foreground start_stationary.sh (Ctrl+C stop), installed all launches,
+  config/RViz, docs and analysis scripts, declared YAML/analysis/ROS dependencies.
+  Moved the radar profile to one canonical config path; removed its root duplicate.
+- Fixed imported driver's shutdown-context warning using the existing signal-event
+  lifecycle: stop radar before destroying ROS. Constructor failures release ports;
+  rejected config aborts the launch; multiple automatic XDS110 matches require
+  explicit ports. These are integration hardening changes, pending tests.
+- Viewer now defaults to ROS subscription; direct serial access requires explicit
+  legacy --serial. Retired radar_test.py's standalone ROS publisher. README leads
+  with the current architecture and launch; old design/deployment docs are marked
+  historical instead of presented as current instructions. Added contribution
+  provenance and preserved the unlicensed-upstream/TODO license fact.
+- Added meaningful hardware-parser regressions and a complete installed-system PTY
+  test: new default mount, conversion, occupancy expiry/stale health, web subscriber
+  viewer, installation closure, clean sensorStop and rejected-profile teardown.
+  Updated the older delayed-odometry/control test to use the canonical hardware
+  driver instead of the removed alternate serial path. Verification pending.
+
+### 2026-11-08 — Consolidation verification: first failures and corrections
+- Clean /opt-only build passed in 4.00 s; all 29 offline tests passed in 1.634 s.
+  Complete stationary PTY/default mount/viewer/expiry and rejected-profile tests
+  passed initially, as did cloud-input/localization/costmap marking assertions.
+- Full middleware run exposed a fixture regression: adapting delayed odometry to
+  base_footprint left the control test's base_link disconnected. The gate correctly
+  refused to move its dry output; added the real-model 1 cm fixed base joint to
+  the test fixture, not to the production stationary TF tree.
+- Optional viewer via a nested `ros2 run` process did not receive launch SIGINT;
+  ROS launch escalated it to SIGTERM. Changed to the installed viewer executable
+  directly and added an assertion forbidding shutdown escalation. Updated the
+  imported viewer startup message to the canonical launch.
+- Nav2 1.1.20 costmap marking/unknown propagation assertions passed, but its
+  destructor emitted a segmentation fault after cleanup. Strengthened the test
+  to assert native exit status and added explicit lifecycle shutdown after cleanup;
+  diagnosis/retest pending. This optional Nav2 server is absent from the working
+  stationary launch and was never connected to robot commands.
+- Git push dry-run failed: no HTTPS credentials on Jetson. Connected GitHub app
+  can publish canonical files but cannot preserve arbitrary original commit
+  author/timestamp objects. Revised provenance approach: publish a 365 KiB Git
+  bundle containing Wenqian's exact 9bee692 ancestry, plus imported source and
+  attribution; no new runtime dependency or parallel working project. Local
+  pre-consolidation bundles/build outputs are preserved in the artifact directory.
+  Earlier planned direct second-parent import is superseded for GitHub publication.
+
+### 2026-11-08 — Consolidation verification: diagnosis and supported boundary
+- Delayed-odometry/watchdog regression passed after restoring its base joint;
+  measured dry perception-dropout stop was 0.299 s in a PTY run, not physical
+  braking. The complete installed stationary system and rejection tests passed
+  in 9.615 s; direct viewer executable now stops cleanly without escalation.
+- GDB confirmed the optional Nav2 1.1.20 crash in
+  rclcpp::CallbackGroup::~CallbackGroup during NodeBase/lifecycle destruction.
+  Explicit shutdown transition did not fix it; a compiled diagnostic destroying
+  ROS objects before context shutdown still exited -11. No ROS libraries modified.
+  Retained exact logs/diagnostic in consolidation artifacts. This is an unresolved
+  native Nav2 limitation outside the stationary launch, not an all-passing suite.
+- Strengthened costmap test checks exit code instead of silently accepting SIGSEGV.
+  Moved its cleanup assertions after Python node/context cleanup to prevent the
+  failed native test contaminating subsequent tests. Documented required
+  stationary tests separately from broader experimental regressions.
+- Added a repeatable operator-authorized real smoke script that checks idle USB
+  ownership/ROS graph, runs the canonical launch plus ROS viewer, records a bag,
+  measures settled source/processed/map rates, unique default mount and health,
+  and verifies complete clean stop without command publishers. Physical results
+  pending; this is not a surveyed spatial experiment.
+
+### 2026-11-08 — Consolidation: final installed and physical verification
+- Final clean-underlay symlink build: 4.06 s. Offline: 29/29 pass in 1.639 s.
+  Broader middleware discovery on domain 89: 5 pass, 1 failure, 0 errors in
+  27.995 s. The one failure is the documented optional Nav2 native teardown;
+  all three required stationary middleware tests pass, as do delayed-odometry/
+  watchdog and localization-loss tests. No skip or ignored native return code
+  conceals the limitation. Startup cloud queue warnings now identify `Full`
+  explicitly: bounded backlog while discovery/TF catches up, not an unknown error.
+- Normal non-symlink install: built in 3.00 s, two complete-system tests pass in
+  9.584 s from /tmp outside the checkout. Installed imports resolve under the
+  normal-install prefix. Additional /opt + local_setup-only import check excludes
+  both primary workspace and legacy overlay prefixes. Installed launch/config,
+  driver, viewer, map RViz settings and analysis scripts are present.
+- Fresh-terminal start helper --show-args succeeds without inherited ROS setup.
+  Canonical system/default mount tested. Removed exact orphan viewer PID 6771,
+  port 60847, left by the earlier nested-ros2-run test; the direct-executable fix
+  subsequently stopped all children without SIGTERM escalation.
+- Real stationary smoke, domain 30, no legacy awr1843_radar prefix: settled
+  duration 15.0163615 s; 150 source, 150 raw and 150 processed messages; 75 maps.
+  Measured first-to-last rates: source 10.006272 Hz, raw 9.999479 Hz, processed
+  10.000377 Hz, occupancy 5.000005 Hz. Last map had 16 occupied room cells;
+  this unsurveyed room smoke is not another reflector-accuracy experiment.
+- Source schema x/y/z/velocity/snr/noise, 24 bytes per point, radar_link; raw and
+  processed x/y/z/doppler, 16 bytes; processed frame base_footprint. One radar_tf
+  publisher and one (0.150,0.060,0.190) identity-rotation transform observed.
+  No stale status during settled window; no /cmd_vel publisher; viewer HTTP 200.
+  System and recorder exit 0, sensorStop logged, no shutdown escalation/traceback.
+- Raw smoke bag and complete logs in consolidation_20261108T1900/physical_smoke;
+  compact results and runtime source hashes in results/consolidation_20261108.
+  Earlier bundles, build/install/log trees, failed attempts and native diagnostic
+  are preserved externally. No large raw bag or generated build tree is committed.
+- Canonical source and contribution archive now include all working Jetson-only
+  driver/viewer code from 9bee692. No required production source remains solely
+  in the old checkout. Authenticated GitHub app publication is used because Git
+  HTTPS push is not configured; full original exact ancestry is recoverable from
+  the committed source-history bundle. Local temporary merge ancestry is not
+  misrepresented as a published Git merge parent.
+- Remaining limits: mount is approximate and not movement-qualified; isolated
+  foil/spatial-sign calibration, real odometry/command timeout/stopping distance,
+  full Nav2 actions/native teardown, dual-radar operation and radar-only
+  localization remain open. Stationary consolidation does not authorize motion.

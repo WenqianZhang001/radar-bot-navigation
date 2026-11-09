@@ -6,7 +6,7 @@ import threading
 import time
 
 from .core import Filter, Grid, Pose, ros_points
-from .io import acquire, replay
+from .io import replay
 from .cloud_input import decode_cloud
 
 
@@ -25,8 +25,8 @@ def main():
     class RadarNode(Node):
         def __init__(self):
             super().__init__('radar_pipeline')
-            defaults = dict(cli='', data='', cfg='', sensor='radar_front',
-                            input_topic='', replay='', frame_id='radar_front', fixed_frame='odom',
+            defaults = dict(sensor='radar_front', input_topic='/radar/points',
+                            replay='', frame_id='radar_link', fixed_frame='base_footprint',
                             min_snr=0., confirmations=1, clear_rays=False,
                             obstacle_ttl=1.5, max_frame_age=.3)
             self.settings = {k: self.declare_parameter(k, v).value for k, v in defaults.items()}
@@ -53,11 +53,13 @@ def main():
             self.thread = None
             self.sequence = 0
             if self.settings['input_topic']:
-                if any(self.settings[k] for k in ('cli', 'data', 'replay')):
-                    raise ValueError('Cloud input cannot be combined with serial or replay')
+                if self.settings['replay']:
+                    raise ValueError('Cloud input cannot be combined with replay')
                 self.subscription = self.create_subscription(PointCloud2,
                     self.settings['input_topic'], self.receive_cloud, qos_profile_sensor_data)
             else:
+                if not self.settings['replay']:
+                    raise ValueError('Use cloud input with awr1843_driver, or provide a replay file')
                 self.thread = threading.Thread(target=self.worker, daemon=True)
                 self.thread.start()
 
@@ -68,7 +70,7 @@ def main():
                 self.sequence += 1
                 self.inbox.put_nowait(frame)
             except (ValueError, queue.Full) as exc:
-                self.get_logger().warning('Cloud rejected: '+str(exc), throttle_duration_sec=2.)
+                self.get_logger().warning(f'Cloud rejected ({type(exc).__name__}): {exc}', throttle_duration_sec=2.)
 
         def worker(self):
             def consume(frames):
@@ -85,12 +87,7 @@ def main():
                     except queue.Full:
                         self.get_logger().error('Input queue full: frame dropped')
             try:
-                if self.settings['replay']:
-                    consume(replay(self.settings['replay']))
-                else:
-                    with acquire(self.settings['cli'], self.settings['data'],
-                                 self.settings['cfg'], self.settings['sensor'], self.stop) as frames:
-                        consume(frames)
+                consume(replay(self.settings['replay']))
             except Exception as exc:
                 self.get_logger().error(str(exc))
 

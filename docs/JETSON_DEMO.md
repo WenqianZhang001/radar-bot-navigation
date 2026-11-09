@@ -1,3 +1,7 @@
+> Historical integration/design record. For the consolidated working system,
+> use [STATIONARY_SYSTEM.md](STATIONARY_SYSTEM.md). Do not source the old driver
+> workspace or follow the earlier parallel serial/TF launch procedure.
+
 # Operator checklist: real Jetson demonstration
 
 This procedure uses real radar measurements. No startup command arms motion.

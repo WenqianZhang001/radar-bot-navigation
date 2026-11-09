@@ -1,0 +1,49 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Background Color: 35; 35; 35
+    Fixed Frame: base_footprint
+    Frame Rate: 15
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Floor
+      Enabled: true
+      Cell Size: 0.1
+      Plane Cell Count: 40
+    - Class: rviz_default_plugins/Map
+      Name: Radar occupancy
+      Enabled: true
+      Alpha: 0.8
+      Topic:
+        Value: /radar_front/occupancy
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Processed radar points
+      Enabled: true
+      Topic:
+        Value: /radar_front/points
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 5
+      Style: Points
+      Size (Pixels): 6
+      Color Transformer: FlatColor
+      Color: 255; 100; 20
+      Decay Time: 0
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Top view
+      Scale: 150
+      Target Frame: base_footprint
+      X: 1
+      Y: 0
+Window Geometry:
+  Width: 1100
+  Height: 800

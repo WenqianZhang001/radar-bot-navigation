@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-"""
-AWR1843BOOST quick test: send a config, read point clouds, print them,
-and optionally publish them to ROS 2 as sensor_msgs/PointCloud2.
+"""Compatibility helpers for the legacy viewer; no standalone ROS driver.
 
-Usage:
-  python3 radar_test.py --cfg awr1843_profile.cfg          # print points only
-  python3 radar_test.py --cfg awr1843_profile.cfg --ros    # also publish /radar/points
+Hardware operation uses radar_navigation.driver through system.launch.py.
 """
 import argparse
 import glob
@@ -72,57 +68,7 @@ def read_frames(data):
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--cfg', required=True, help='radar config file')
-    ap.add_argument('--ros', action='store_true', help='publish /radar/points to ROS 2')
-    args = ap.parse_args()
-
-    cli_port, data_port = find_ports()
-    print(f"CLI port : {cli_port}\nData port: {data_port}\n")
-    cli = serial.Serial(cli_port, 115200, timeout=0.1)
-    data = serial.Serial(data_port, 921600, timeout=0.1)
-
-    if not send_cfg(cli, args.cfg):
-        print("\nSome config lines failed. Paste the [ERR] lines to troubleshoot.")
-    print("\nStreaming... press Ctrl+C to stop.\n")
-
-    pub = node = None
-    if args.ros:
-        import rclpy
-        from sensor_msgs.msg import PointCloud2  # noqa: F401
-        from sensor_msgs_py import point_cloud2
-        from std_msgs.msg import Header
-        rclpy.init()
-        node = rclpy.create_node('awr1843_test')
-        pub = node.create_publisher(PointCloud2, '/radar/points', 10)
-
-    try:
-        for frame_num, pts in read_frames(data):
-            print(f"Frame {frame_num}: {len(pts)} points")
-            for x, y, z, v in pts[:5]:
-                r = (x * x + y * y + z * z) ** 0.5
-                print(f"    range {r:5.2f} m   x {x:+.2f}  y {y:+.2f}  z {z:+.2f}  vel {v:+.2f} m/s")
-            if pub:
-                header = Header()
-                header.stamp = node.get_clock().now().to_msg()
-                header.frame_id = 'radar_link'
-                # TI: y forward, x right, z up  ->  ROS: x forward, y left, z up
-                from sensor_msgs.msg import PointField
-                fields = [PointField(name=name, offset=i*4, datatype=PointField.FLOAT32, count=1)
-                          for i, name in enumerate(('x', 'y', 'z', 'doppler'))]
-                ros_pts = [(y, -x, z, v) for x, y, z, v in pts]
-                pub.publish(point_cloud2.create_cloud(header, fields, ros_pts))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        send_command(cli, 'sensorStop')
-        cli.close()
-        data.close()
-        if node:
-            node.destroy_node()
-            import rclpy
-            rclpy.shutdown()
-        print("\nRadar stopped.")
+    raise SystemExit('Standalone hardware/ROS test retired. Use: ros2 launch radar_navigation system.launch.py')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,109 @@
+{
+  "passed": true,
+  "kind": "real stationary radar smoke, unsurveyed room scene",
+  "robot_motion_commanded": false,
+  "seconds": 15.016361499998311,
+  "schemas": {
+    "source": {
+      "frame": "radar_link",
+      "fields": [
+        "x",
+        "y",
+        "z",
+        "velocity",
+        "snr",
+        "noise"
+      ],
+      "point_step": 24
+    },
+    "raw": {
+      "frame": "radar_link",
+      "fields": [
+        "x",
+        "y",
+        "z",
+        "doppler"
+      ],
+      "point_step": 16
+    },
+    "processed": {
+      "frame": "base_footprint",
+      "fields": [
+        "x",
+        "y",
+        "z",
+        "doppler"
+      ],
+      "point_step": 16
+    }
+  },
+  "driver_prefix": "/home/tejas/radar_integration_ws/install/radar_navigation",
+  "rates": {
+    "processed": 10.000376786006901,
+    "source": 10.006271503865456,
+    "raw": 9.999478840585045
+  },
+  "counts": {
+    "processed": 150,
+    "source": 150,
+    "raw": 150
+  },
+  "map_messages": 75,
+  "map_hz": 5.000004699329374,
+  "occupied_cells_last": 16,
+  "stale_messages": 0,
+  "mount_publishers": [
+    {
+      "name": "radar_tf",
+      "namespace": "/"
+    }
+  ],
+  "mounts": [
+    {
+      "parent": "base_footprint",
+      "child": "radar_link",
+      "translation": [
+        0.15,
+        0.06,
+        0.19
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "nodes": [
+    [
+      "stationary_smoke_observer",
+      "/"
+    ],
+    [
+      "rosbag2_recorder",
+      "/"
+    ],
+    [
+      "radar_tf",
+      "/"
+    ],
+    [
+      "awr1843_driver",
+      "/"
+    ],
+    [
+      "radar_pipeline",
+      "/radar_front"
+    ],
+    [
+      "radar_viewer",
+      "/"
+    ]
+  ],
+  "command_publishers": [],
+  "viewer_http_status": 200,
+  "system_exit_code": 0,
+  "bag_exit_code": 0,
+  "clean_shutdown": true
+}

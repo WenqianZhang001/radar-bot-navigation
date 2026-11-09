@@ -1,3 +1,7 @@
+> Historical integration/design record. For the consolidated working system,
+> use [STATIONARY_SYSTEM.md](STATIONARY_SYSTEM.md). Do not source the old driver
+> workspace or follow the earlier parallel serial/TF launch procedure.
+
 # Deploy and validate external-driver occupancy
 
 ## Inventory baseline (reported November 8, 2026)

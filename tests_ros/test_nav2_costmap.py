@@ -83,6 +83,7 @@ class Nav2CostmapIntegration(unittest.TestCase):
                 wait_for(lambda m:all(v==0 for v in m.data))
                 transition(4)
                 transition(2)
+                transition(5)
         finally:
             if process:
                 os.killpg(process.pid,signal.SIGINT)
@@ -92,10 +93,13 @@ class Nav2CostmapIntegration(unittest.TestCase):
                     os.killpg(process.pid,signal.SIGKILL)
                     process.wait()
             log.seek(0)
-            print(log.read()[-4000:])
+            output=log.read()
+            print(output[-4000:])
             log.close()
             node.destroy_node()
             rclpy.shutdown()
+            self.assertNotIn('Segmentation fault', output)
+            self.assertEqual(process.returncode, 0)
 
 
 if __name__=='__main__':

@@ -1,0 +1,145 @@
+{
+  "base_revision": "79417f01ae173102cb788f21aff26e9a0933b293",
+  "driver_source_revision": "9bee6926c19a846af50e3197726adbf625b8291b",
+  "source_history": "docs/provenance/wenqian_9bee692.bundle",
+  "build": {
+    "clean_opt_only": "passed",
+    "seconds": 4.06,
+    "legacy_driver_overlay_present": false
+  },
+  "offline_tests": {
+    "passed": 29,
+    "failures": 0,
+    "seconds": 1.639
+  },
+  "middleware_tests": {
+    "domain": 89,
+    "passed": 5,
+    "failed": 1,
+    "errors": 0,
+    "seconds": 27.995,
+    "required_stationary_tests_passed": 3,
+    "failure": "optional Nav2 1.1.20 native teardown SIGSEGV in rclcpp::CallbackGroup destructor; occupancy assertions passed but test correctly fails",
+    "full_suite_all_passed": false
+  },
+  "normal_install": {
+    "symlink_install": false,
+    "build_seconds": 3.0,
+    "complete_system_tests_passed": 2,
+    "test_seconds": 9.584,
+    "imports_outside_checkout": true,
+    "independent_opt_plus_install_prefix_check_passed": true
+  },
+  "physical_smoke": {
+    "passed": true,
+    "kind": "real stationary radar smoke, unsurveyed room scene",
+    "robot_motion_commanded": false,
+    "seconds": 15.016361499998311,
+    "schemas": {
+      "source": {
+        "frame": "radar_link",
+        "fields": [
+          "x",
+          "y",
+          "z",
+          "velocity",
+          "snr",
+          "noise"
+        ],
+        "point_step": 24
+      },
+      "raw": {
+        "frame": "radar_link",
+        "fields": [
+          "x",
+          "y",
+          "z",
+          "doppler"
+        ],
+        "point_step": 16
+      },
+      "processed": {
+        "frame": "base_footprint",
+        "fields": [
+          "x",
+          "y",
+          "z",
+          "doppler"
+        ],
+        "point_step": 16
+      }
+    },
+    "driver_prefix": "/home/tejas/radar_integration_ws/install/radar_navigation",
+    "rates": {
+      "processed": 10.000376786006901,
+      "source": 10.006271503865456,
+      "raw": 9.999478840585045
+    },
+    "counts": {
+      "processed": 150,
+      "source": 150,
+      "raw": 150
+    },
+    "map_messages": 75,
+    "map_hz": 5.000004699329374,
+    "occupied_cells_last": 16,
+    "stale_messages": 0,
+    "mount_publishers": [
+      {
+        "name": "radar_tf",
+        "namespace": "/"
+      }
+    ],
+    "mounts": [
+      {
+        "parent": "base_footprint",
+        "child": "radar_link",
+        "translation": [
+          0.15,
+          0.06,
+          0.19
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    ],
+    "nodes": [
+      [
+        "stationary_smoke_observer",
+        "/"
+      ],
+      [
+        "rosbag2_recorder",
+        "/"
+      ],
+      [
+        "radar_tf",
+        "/"
+      ],
+      [
+        "awr1843_driver",
+        "/"
+      ],
+      [
+        "radar_pipeline",
+        "/radar_front"
+      ],
+      [
+        "radar_viewer",
+        "/"
+      ]
+    ],
+    "command_publishers": [],
+    "viewer_http_status": 200,
+    "system_exit_code": 0,
+    "bag_exit_code": 0,
+    "clean_shutdown": true
+  },
+  "artifact_directory": "/home/tejas/radar_integration_artifacts/consolidation_20261108T1900",
+  "movement_commanded": false,
+  "source_state": "Physical smoke ran on integration working tree; runtime SHA256 manifest matches the published runtime files. PROGRESS/docs/results were completed afterward."
+}

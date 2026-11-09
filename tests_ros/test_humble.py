@@ -29,17 +29,18 @@ class HumbleIntegration(unittest.TestCase):
     def test_serial_to_mapping_and_watchdog(self):
         rclpy.init()
         node=Node('integration_observer')
-        tf=StaticTransformBroadcaster(node)
-        mount=TransformStamped()
-        mount.header.frame_id='base_link'
-        mount.child_frame_id='radar_front'
-        mount.transform.rotation.w=1.
-        tf.sendTransform(mount)
+        base_tf=StaticTransformBroadcaster(node)
+        joint=TransformStamped()
+        joint.header.frame_id='base_footprint'
+        joint.child_frame_id='base_link'
+        joint.transform.translation.z=.01
+        joint.transform.rotation.w=1.
+        base_tf.sendTransform(joint)
         odom_tf=TransformBroadcaster(node)
         def delayed_odometry():
             msg=TransformStamped()
             msg.header.frame_id='odom'
-            msg.child_frame_id='base_link'
+            msg.child_frame_id='base_footprint'
             msg.header.stamp=Time(nanoseconds=node.get_clock().now().nanoseconds-50000000).to_msg()
             msg.transform.rotation.w=1.
             odom_tf.sendTransform(msg)
@@ -95,9 +96,13 @@ class HumbleIntegration(unittest.TestCase):
                 cfg=os.path.join(directory,'radar.cfg')
                 with open(cfg,'w') as stream:
                     stream.write('sensorStart\n')
+                mount_path=os.path.join(directory,'mount.yaml')
+                with open(mount_path,'w') as stream:
+                    stream.write('measured: true\nx: 0.0\ny: 0.0\nz: 0.0\nroll_deg: 0.0\npitch_deg: 0.0\nyaw_deg: 0.0\n')
                 for command in (
-                    ['ros2','launch','radar_navigation','radar.launch.py',
-                     'cli:='+os.ttyname(cli_slave),'data:='+os.ttyname(data_slave),'cfg:='+cfg],
+                    ['ros2','launch','radar_navigation','system.launch.py',
+                     'cli_port:='+os.ttyname(cli_slave),'data_port:='+os.ttyname(data_slave),
+                     'cfg_file:='+cfg,'mount_file:='+mount_path,'fixed_frame:=odom'],
                     ['ros2','run','radar_navigation','radar_control']):
                     log=tempfile.TemporaryFile(mode='w+')
                     logs.append(log)

@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
-"""
-Live point-cloud viewer for the AWR1843BOOST, shown in a web browser.
+"""ROS-subscriber web viewer, adapted from Wenqian Zhang's Jetson commit 9bee692.
 
-Configures the radar (using radar_test.py), then serves a page with a top-down
-view and a rotatable 3D view of every radar frame.
-
-Usage:
-  python3 radar_viewer.py                    # uses awr1843_profile.cfg next to this file
-  python3 radar_viewer.py --cfg other.cfg --port 8765
-
-Then open http://localhost:8765 in a browser on your laptop. VS Code Remote-SSH
-forwards the port automatically (see its PORTS tab). From a plain ssh session,
-reconnect with:  ssh -L 8765:localhost:8765 <user>@<jetson-ip>
-
-See README.md in this folder for setup and troubleshooting.
+Default: subscribe to /radar/points without opening hardware. The stationary
+system launch optionally starts this viewer. --serial is a legacy diagnostic
+mode and must never run alongside the hardware driver.
 """
 import argparse
 import json
@@ -61,6 +51,87 @@ def read_radar(data, latest):
         latest.publish(json.dumps({'error': f'Lost the radar: {e}'}))
 
 
+def radar_source(args, latest, cleanups):
+    """Read the radar directly over USB, configuring it with args.cfg."""
+    cli_port, data_port = find_ports()
+    try:
+        # exclusive=True: refuse to share the radar with another program
+        cli = serial.Serial(cli_port, 115200, timeout=0.1, exclusive=True)
+        data = serial.Serial(data_port, 921600, timeout=0.1, exclusive=True)
+    except serial.SerialException as e:
+        if 'lock' not in str(e):
+            raise
+        raise SystemExit("The radar is busy: another program (the ROS 2 driver or another viewer) is using it.\n"
+                         "Stop that program, or run  python3 radar_viewer.py --ros  to show the driver's data.")
+
+    def stop():
+        send_command(cli, 'sensorStop')
+        cli.close()
+        data.close()
+        print("Radar stopped.")
+    cleanups.append(stop)
+
+    print(f"Configuring radar from {args.cfg}")
+    if not send_cfg(cli, args.cfg):
+        print("\nSome config lines failed (see [ERR] above); starting the viewer anyway.")
+    threading.Thread(target=read_radar, args=(data, latest), daemon=True).start()
+
+
+def ros_source(args, latest, cleanups):
+    """Show what the ROS 2 radar driver publishes on args.topic. The driver owns the radar."""
+    try:
+        import rclpy
+        from rclpy.executors import SingleThreadedExecutor
+        from rclpy.qos import qos_profile_sensor_data
+        from rclpy.signals import SignalHandlerOptions
+        from sensor_msgs.msg import PointCloud2
+        from sensor_msgs_py import point_cloud2
+    except ImportError:
+        raise SystemExit("--ros needs ROS 2. Run  source /opt/ros/humble/setup.bash  first.")
+
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)   # leave Ctrl+C to the viewer
+    node = rclpy.create_node('radar_viewer')
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+    stopping = threading.Event()
+
+    def spin():
+        while not stopping.is_set():
+            executor.spin_once(timeout_sec=0.1)
+    spinner = threading.Thread(target=spin, daemon=True)
+
+    def stop():
+        # Let the spin thread finish before tearing ROS down; doing both at once crashes rclpy.
+        stopping.set()
+        spinner.join(timeout=2.0)
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.try_shutdown()
+    cleanups.append(stop)
+
+    received = 0
+
+    def on_cloud(msg):
+        nonlocal received
+        received += 1
+        if received == 1:
+            print(f"Receiving {args.topic}", flush=True)
+        has_velocity = any(f.name == 'velocity' for f in msg.fields)
+        fields = ['x', 'y', 'z', 'velocity'] if has_velocity else ['x', 'y', 'z']
+        points = []
+        for p in point_cloud2.read_points(msg, field_names=fields, skip_nans=True):
+            x, y, z = float(p[0]), float(p[1]), float(p[2])
+            v = float(p[3]) if has_velocity else 0.0
+            # ROS axes (x forward, y left) -> the page's radar axes (x right, y forward)
+            points.append([round(-y, 3), round(x, 3), round(z, 3), round(v, 3)])
+        latest.publish(json.dumps({'frame': received, 'points': points}))
+
+    node.create_subscription(PointCloud2, args.topic, on_cloud, qos_profile_sensor_data)
+    spinner.start()
+    print(f"Showing ROS 2 topic {args.topic}. If the driver isn't running yet, start it with:\n"
+          f"  ros2 launch radar_navigation system.launch.py")
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
@@ -96,10 +167,21 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--cfg', default=str(HERE / 'awr1843_profile.cfg'), help='radar config file')
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        default_cfg = str(Path(get_package_share_directory('radar_navigation')) / 'config/awr1843_profile.cfg')
+    except (ImportError, LookupError):
+        default_cfg = str(HERE / 'config/awr1843_profile.cfg')
+    ap.add_argument('--cfg', default=default_cfg, help='radar config file (not used with --ros)')
     ap.add_argument('--port', type=int, default=8765, help='web page port (default 8765)')
     ap.add_argument('--host', default='127.0.0.1',
                     help='address to serve on; 0.0.0.0 lets other computers on the network open the page directly')
+    source = ap.add_mutually_exclusive_group()
+    source.add_argument('--serial', dest='ros', action='store_false', help='legacy direct serial diagnostic; mutually exclusive with the driver')
+    source.add_argument('--ros', action='store_true', default=True,
+                    help="show the ROS 2 radar driver's point cloud instead of opening the radar, "
+                         "so the viewer and the driver can run together")
+    ap.add_argument('--topic', default='/radar/points', help='point cloud topic for --ros (default /radar/points)')
     args = ap.parse_args()
 
     # `kill` (SIGTERM) and closing the terminal (SIGHUP) should still stop the radar cleanly.
@@ -112,25 +194,17 @@ def main():
 
     server = ThreadingHTTPServer((args.host, args.port), Handler)  # fails fast if the port is taken
     server.latest = LatestFrame()
-    cli_port, data_port = find_ports()
-    # exclusive=True refuses to start if another copy of the viewer already has the radar open.
-    cli = serial.Serial(cli_port, 115200, timeout=0.1, exclusive=True)
-    data = serial.Serial(data_port, 921600, timeout=0.1, exclusive=True)
+    cleanups = []   # each data source registers how to shut itself down
     try:
-        print(f"Configuring radar from {args.cfg}")
-        if not send_cfg(cli, args.cfg):
-            print("\nSome config lines failed (see [ERR] above); starting the viewer anyway.")
-        threading.Thread(target=read_radar, args=(data, server.latest), daemon=True).start()
+        (ros_source if args.ros else radar_source)(args, server.latest, cleanups)
         print(f"\nViewer running at http://localhost:{args.port}   (Ctrl+C to stop)", flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
         server.server_close()
-        send_command(cli, 'sensorStop')
-        cli.close()
-        data.close()
-        print("Radar stopped.")
+        for stop in reversed(cleanups):
+            stop()
 
 
 PAGE = r"""<!doctype html>

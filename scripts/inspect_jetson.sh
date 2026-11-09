@@ -7,7 +7,7 @@ probe() {
   timeout 12s "$@" 2>&1 || printf 'Unavailable or timed out (exit %s)\n' "$?"
 }
 probe 'Platform' uname -a
-for repo in /home/tejas/radar_pointcloud /home/tejas/radar-bot-navigation; do
+for repo in /home/tejas/radar_integration_ws/src/radar_navigation /home/tejas/radar-bot-navigation; do
   if [ -d "$repo" ]; then
     probe "$repo HEAD" git -C "$repo" log -1 --format='%H %s'
     probe "$repo local changes (names only)" git -C "$repo" status --short

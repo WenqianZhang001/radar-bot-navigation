@@ -1,5 +1,8 @@
 # Stationary top-plate experiment — 2026-11-08
 
+> Historical experiment commands below describe runtime 8077be6. For the current
+> single-package launch and default calibration, use [STATIONARY_SYSTEM.md](STATIONARY_SYSTEM.md).
+
 The added target assembly was detected in every surveyed target-present frame.
 The two target-area occupancy cells remained occupied after removing foil and
 its attached marker while retaining the boxes. After the boxes were also removed,
