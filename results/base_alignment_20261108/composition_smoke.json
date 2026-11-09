@@ -1,0 +1,94 @@
+{
+  "duration_s": 20.01653358600015,
+  "counts": {
+    "native_odom": 401,
+    "odom": 401,
+    "processed": 200,
+    "command": 400,
+    "guard": 400,
+    "map": 100,
+    "source": 200
+  },
+  "rates": {
+    "native_odom": 20.002500350549585,
+    "odom": 20.004340183656513,
+    "processed": 9.994279314197335,
+    "command": 20.001432365232628,
+    "guard": 20.00192963778444,
+    "map": 5.001114540051581,
+    "source": 10.000527897714631
+  },
+  "frames": {
+    "native_odom": [
+      [
+        "native_odom",
+        "native_base_footprint"
+      ]
+    ],
+    "odom": [
+      [
+        "odom",
+        "base_footprint"
+      ]
+    ],
+    "source": [
+      [
+        "radar_link",
+        ""
+      ]
+    ],
+    "processed": [
+      [
+        "odom",
+        ""
+      ]
+    ],
+    "map": [
+      [
+        "odom",
+        ""
+      ]
+    ]
+  },
+  "native_canonical_pairs": 401,
+  "max_odom_conversion_error": 0.0,
+  "native_canonical_joint_pairs": 401,
+  "max_joint_conversion_error": 0.0,
+  "tf_odom_comparisons": 400,
+  "max_tf_odom_error": 0.0,
+  "mount_translation": [
+    0.15,
+    0.06,
+    0.19
+  ],
+  "base_always_zero": true,
+  "guard_dry": true,
+  "publishers": {
+    "/odom": [
+      "base_frame_adapter"
+    ],
+    "/base/native_odom": [
+      "diff_drive_controller"
+    ],
+    "/joint_states": [
+      "base_frame_adapter"
+    ],
+    "/tf": [
+      "robot_state_publisher",
+      "diff_drive_controller"
+    ],
+    "/tf_static": [
+      "robot_state_publisher",
+      "base_frame_adapter",
+      "radar_tf"
+    ],
+    "/base/driver_cmd_vel": [
+      "base_watchdog"
+    ],
+    "/radar/cmd_vel_safe": [
+      "radar_control"
+    ],
+    "/cmd_vel": []
+  },
+  "passed": true
+}

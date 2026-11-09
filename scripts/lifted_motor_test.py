@@ -152,7 +152,7 @@ def main():
                 spin(.015)
             heartbeat,_,_=packet.read1ByteTxRx(port,200,19)
             command,_,_=packet.read4ByteTxRx(port,200,150)
-            result.update(heartbeat_after_guard_death=heartbeat,latched_linear_register_after_guard_death=command,emergency_stop_required=emergency)
+            result.update(heartbeat_after_guard_death=heartbeat,latched_linear_register_after_guard_death=command-2**32 if command>=2**31 else command,emergency_stop_required=emergency)
             packet.writeTxRx(port,200,150,24,[0]*24)
         finally:port.closePort()
         result['opencr_raw_samples']=raw

@@ -19,6 +19,7 @@ setup(
         'radar_node=radar_navigation.ros_node:main',
         'radar_control=radar_navigation.control_node:main',
         'base_watchdog=radar_navigation.base_watchdog:main',
+        'base_frame_adapter=radar_navigation.base_frame_adapter:main',
         'radar_probe=radar_navigation.probe:main',
         'radar_fusion=radar_navigation.fusion_node:main',
         'radar_evaluate=radar_navigation.evaluate:main']})

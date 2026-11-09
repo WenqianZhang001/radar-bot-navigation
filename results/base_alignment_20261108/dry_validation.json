@@ -1,0 +1,18 @@
+{
+  "enabled_dry_output_max": [
+    0.05,
+    0.0
+  ],
+  "disable_first_zero_s": 0.006873254998936318,
+  "sensor_dropout_stale": true,
+  "sensor_dropout_output_zero": true,
+  "source_frames_first_quarter_second_after_resume": 3,
+  "odom_dropout_stale": true,
+  "odom_dropout_processed_after_one_second": 0,
+  "odom_dropout_output_zero": true,
+  "base_output_always_zero": true,
+  "controller_caps_respected": true,
+  "base_pid": 13942,
+  "radar_pid": 13915,
+  "passed": true
+}

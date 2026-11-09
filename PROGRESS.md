@@ -1,35 +1,39 @@
 # Engineering progress
 
 ## Current status
-One canonical installable ROS package now contains Wenqian's verified acquisition
-and subscriber viewer, cloud perception, occupancy, calibration and launch. On
-the Jetson use ~/radar_integration_ws and system.launch.py (or the foreground
-start_stationary.sh helper); the old driver workspace is archival, not sourced.
-The default top-plate TF is (0.150,0.060,0.190) m, nominal zero angles, one publisher.
+Canonical project: jelsayyid/radar-navigation, one ROS package in
+~/radar_integration_ws/src/radar_navigation. Wenqian's original 9bee692 checkout
+is preserved and not sourced. Stationary start_stationary.sh remains available;
+start_drive.sh composes real base, odom-frame radar perception and reactive dry
+control. Ctrl+C stops the composition. Default is dry/disarmed; no floor motion
+has been authorized or performed.
 
-Current base integration adds guarded native TurtleBot3 bring-up, real 20 Hz wheel
-odometry, unique odom/base/radar TF edges, and odom-frame radar perception. Dry
-reactive control/dropout checks pass; corrected offline suite 33/33 passes.
-Supported-wheel stop tests passed: explicit zero stop 0.212 s, disable 0.258 s,
-command producer death 0.429 s, guard/native-child death/OpenCR timeout 0.600 s.
-CRITICAL: visual observation found forward wheel tops moving away from the
-radar-facing observer, while left-turn directions matched. Encoder signs alone
-did not validate physical forward direction. Floor testing is blocked pending
-chassis/radar frame diagnosis and correction; no blind command sign flip.
-No floor motion or ground-truth odometry accuracy has been validated. Default
-drive launch is dry/disarmed; stationary sensing-only launch remains available.
-See docs/BASE_INTEGRATION.md and docs/BASE_TEST_2026-11-08.md.
+Radar-facing +x is now physically confirmed forward. Isolated wheel tests exposed
+and resolved native-channel direction mismatch with consistent commands, wheel
+states, odometry/covariance and explicit native/canonical TF bridges. Stock driver,
+odometry and model are retained. Radar mount remains (.150,.060,.190) m, zero
+nominal rotation, published once. Wheel-only odom ~20 Hz; radar ~10 Hz/map ~5 Hz.
+Final 20.017 s dry smoke passed: 401 canonical odom, 200 source/processed clouds,
+100 maps; 400 measurement-time TF comparisons and 401 native/canonical pairs agree.
+All actual driver commands zero while dry. Offline 36/36 and relevant middleware pass.
 
-Physical November 8 extended-target results and limits remain below and in
-[the report](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md): support boxes sustained
-target-area occupancy after foil/marker removal; all-added-object removal yielded
-unknown-cell expiry at 1.529/1.639 s from fresh evidence. Spatial return modes and
-survey/tilt/support ambiguity prevent a precision foil-accuracy claim.
-Nav2's independent teardown investigation remains outside this hardware change.
-Next: resolve physical forward/frame mismatch, then explicitly approved low-speed
-floor radar stopping/avoidance and measured odometry drift/traction trials.
+Supported-wheel corrected stops: explicit zero .213 s, disable .209 s, command
+producer death .435 s, guard/native-child death/OpenCR heartbeat expiry .575 s.
+Operator confirmed physical forward/left-turn/stops. These are supported-wheel
+latencies, NOT floor distances or chassis odometry accuracy. Next: explicitly
+approved supervised <=.03 m/s bounded straight radar-stop trial, then drift,
+traction and avoidance trials. Guard freeze with surviving native heartbeat,
+canonical IMU calibration, acquisition timestamps and ego-Doppler remain limitations.
+See docs/BASE_INTEGRATION.md, BASE_COORDINATES.md and BASE_ALIGNMENT_TEST_2026-11-08.md.
 
-## Integration update — 2026-11-08
+November 8 stationary target evidence remains valid in the radar-facing frame:
+support boxes sustained occupancy after foil/marker removal; removing all added
+objects yielded unknown-cell expiry at 1.529/1.639 s from fresh evidence. Survey,
+clutter and target dimensions prevent precision foil-accuracy claims. Raw bags
+remain under /home/tejas/radar_integration_artifacts; compact measured evidence is
+committed. Nav2's separate teardown branch was not overwritten or used as a blocker.
+
+## Historical integration note — 2026-11-08, before Jetson access
 Both remote main revisions match the project handoff (`facbc10` and Wenqian's
 `528bccd`). Source inspection confirms that a topic remap alone cannot connect
 her ROS-coordinate cloud to the serial-owning perception node. Proposed path:
@@ -585,3 +589,115 @@ records no additional physical trial or motion.
 - Official 2.3.6 joint_state.cpp confirms RPM_TO_MS velocities, TICK_TO_RAD positions;
   this independently supports the measurement-threshold correction above.
   Saved upstream references in artifact root; no vendor firmware/code rewritten.
+
+### 2026-11-08 — Isolated native-channel diagnostic
+- Operator could see QC 2023 sticker at radar-facing end and gray rectangular
+  component opposite, but no definite FRONT arrow or motor IDs. These cosmetic
+  features do not establish a frame. User explicitly wants radar-facing +forward
+  with consistent commands/odom/TF, and still prohibits floor movement.
+- With operator watching, separately announced A/B supported-wheel pulses: A
+  v=.02,w=+.14, then zero 3 s, B v=.02,w=-.14, each 2 s. Native telemetry verified
+  A [0,+.038777] m/s, B [+.038777,0] m/s, final [0,0]. Requested observed side and
+  top-direction separately for A/B; do not infer physical assignment from names.
+- Data preserved in isolation1 and isolation1_bag under hardware artifact root.
+  Stopped base and bag after test. No drive-mode/ID/firmware/TF changes made yet.
+
+### 2026-11-08 — Repeat observer synchronization
+- Operator missed isolation1 and requested repeat. Prepared new isolation2 bag
+  and run, preserving isolation1. Avoided announcing "now" before an approval/
+  command startup delay: scheduled A on actual Jetson clock 21:22:11 ET, B
+  21:22:16, final stop ~21:22:19, after 45 s zero/disabled wait. Announced actual
+  clock times while process already waiting. Helper rejects schedules >60 s and
+  publishes only zero/enable=false until due; bounded pulses unchanged.
+
+### 2026-11-08 — Physical mapping established; consistent coordinate adapter
+- Operator observed scheduled A: observer-right (radar-left) wheel top AWAY;
+  B: observer-left (radar-right) wheel top AWAY. Combined with measured isolated
+  native velocities this establishes canonical left=-native right and canonical
+  right=-native left. Hence v_native=-v_canonical, yaw_native=yaw_canonical.
+  This is measured actuator mapping; no assumption about QC sticker/board arrow.
+- Implemented explicit native/canonical frames rather than command-only inversion.
+  Retain stock native odometry, geometry and encoder integration. Native stream
+  /base/native_odom uses native_odom->native_base_footprint dynamic TF. Static
+  odom->native_odom half-turn and native_base_footprint->base_footprint half-turn
+  make canonical odom start at yaw zero with radar-facing +x. Adapter publishes
+  /odom with planar position/velocity negated and yaw unchanged, covariance cross
+  terms rotated, original measurement stamps retained. No second dynamic TF.
+- RSP frame_prefix=native_ preserves stock robot geometry in native coordinates.
+  Explicit canonical base_footprint->base_link z .010 m; existing sole radar_tf
+  retains surveyed (.150,.060,.190) m, zero nominal angles in radar-facing frame.
+  Native wheel telemetry retained; canonical /joint_states swaps/negates channels.
+  IMU remains explicitly native at /base/native_imu with native_imu_link frame;
+  no claim of canonical IMU alignment or fused-floor validation.
+- Three new offline coordinate tests pass: physical wheel/command consistency,
+  curved-path static-chain geometry and covariance cross terms. Full build,
+  middleware, real TF and supported-wheel correction validation pending.
+
+### 2026-11-08 — Corrected forward visually confirmed; dry consistency passed
+- Coordinate adapter build passed in 4.11 s; all 36 offline tests passed in
+  1.784 s. Required Humble serial/watchdog middleware passed in 10.648 s
+  (59 clouds,39 maps, stale stop .251093 s); localization gate passed in 4.218 s.
+- Initial real dry comparison 343 matched native/canonical odom and joints:
+  conversion error exactly zero; measurement-time TF error <=5.42e-20. Cold
+  observer discovery excluded early samples, so warmed for 3 s and repeated.
+  Warm 20.011274 s interval: 401 native and canonical odom (~20.006 Hz),
+  200 source (9.995 Hz), 201 processed (10.003 Hz), 100 maps (5.000 Hz).
+  All actual base commands zero in dry mode. Full graph single canonical /odom
+  publisher adapter; native dynamic TF remains stock diff_drive_controller;
+  unique static frame bridges/RSP native links/radar mount ownership.
+- Corrected visual repeat1 scheduled 21:32:40/45, but operator missed it.
+  Repeat2 requested 30 s ahead, scheduled 21:35:04 forward /21:35:09 turn, final
+  disable 21:35:12. Operator explicitly confirmed BOTH tire tops toward them
+  for forward, observer-right away / observer-left toward during left turn,
+  and both stopped. Thus physical canonical forward/yaw now verified, not just
+  encoder signs. All supported, no floor movement.
+- Separate alignment_bag and alignment_observations preserve real radar, native/
+  canonical odom/joints, native IMU, TF, private commands/status and enable.
+  Earlier bags/runs remain intact. Proceeding corrected-path watchdog rerun.
+
+### 2026-11-08 — Corrected-path safety and final real-hardware validation
+- Full supported-wheel corrected harness passed. Explicit zero stop .212994 s,
+  enable false .208881 s, producer SIGKILL with enable alive .435325 s (reason
+  stale_command), guard SIGKILL / native child heartbeat loss .574868 s.
+  Native command register remained -4 (-.04 m/s); stopped independently with no
+  emergency stop. Parent-death kernel kill verified again. Raw and canonical
+  telemetry recorded together; no motor IDs, firmware or EEPROM changed.
+- Corrected forward two-second encoder window .072110 m, yaw -.000176 rad;
+  left-turn .360170 rad, -.000051 m mean translation. Forward wheel surface
+  medians +.039568/+ .039568 m/s; turn -.028094/+.027698 m/s. Instantaneous odom
+  twist medians .034118 m/s forward and .178324 rad/s turn. End coasting excluded
+  from window; body fixed on support, so these are not floor odometry accuracy.
+- Final real sensor/odom dropout dry test passed: enabled safe output .05 m/s,
+  disable-to-zero .006873 s; radar/odom loss stale health and zero control; no
+  processed frames after 1 s odom loss. Radar restart 3 frames/first .25 s, no
+  old 13-frame replay burst. Actual base output always zero, caps respected.
+- Final 20.016534 s warmed dry composition passed: native/canonical odom 401 each
+  (~20.004 Hz canonical); source 200 (10.001 Hz), processed 200 (9.994 Hz),
+  occupancy 100 (5.001 Hz). 401 matched odom/joint conversions exactly zero
+  error; 400 measurement-time TF vs canonical odom comparisons exactly zero
+  error. Mount translation .15,.06,.19. Graph sole /odom base_frame_adapter,
+  sole /base/native_odom diff_drive_controller, sole command source each stage,
+  no /cmd_vel publishers. /tf RSP native joints + native dynamic odom; /tf_static
+  adapter bridges + native RSP links + sole radar_tf mount. No duplicate edge.
+- Reproducible corrected metrics/plot under results/base_alignment_20261108;
+  raw alignment_bag, alignment_observations, isolation2, corrected_visual2 and
+  lifted_motor_test_aligned preserved alongside all earlier successful/failed runs.
+- Updated README/operation and dedicated coordinate/test reports with native
+  interfaces, measured transformation, failed observations, retest methods, exact
+  limits and remaining hardware uncertainties. Prepared bounded straight floor
+  method only; user explicitly withheld floor movement. No floor commands issued.
+
+### 2026-11-08 — Corrected experiment closure and deployment preparation
+- Stopped complete corrected drive composition cleanly and finalized alignment
+  recorder/observer. Final read-only OpenCR probe: raw motor velocities [0,0],
+  status 0, connected=true, torque=true, 12.04 V; no motion command issued by probe.
+- alignment_bag finalized: 563.009897 s, 143778 messages, 151684908 bytes
+  (~144.7 MiB), 19 topics including native/canonical odom/joints/IMU, radar, TF
+  and commands. isolation2_bag: 117.573754 s, 17076 messages, 4182765 bytes.
+  Original pre-alignment hardware_bag remains 2778.455724 s /584651 messages.
+  These durations include idle/startup/process-death gaps; use phase events for
+  rates/latencies. No raw bag/JSONL committed; compact summaries/plots only.
+- All ROS runtime code had passed build/36 offline tests, required middleware,
+  physical direction/stop tests and final dry sensor-loss/TF/rate checks before
+  publication. Post-test edits only update docs/compact results. Main publication
+  uses expected-head lease and preserves separate fix/humble-nav2-teardown branch.

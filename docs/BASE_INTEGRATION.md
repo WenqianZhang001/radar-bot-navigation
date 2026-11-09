@@ -3,6 +3,8 @@
 Canonical checkout/workspace on Jetson: `~/radar_integration_ws/src/radar_navigation`.
 ROS 2 Humble, TurtleBot3 Waffle Pi, OpenCR firmware register 5 / model 0x5000.
 No firmware was flashed. Install package dependencies with rosdep and build as in README.
+The base ownership check also requires `fuser` from Ubuntu package `psmisc`
+(already installed on the lab Jetson).
 
 ## Start, inspect, stop
 
@@ -43,9 +45,12 @@ That mode starts no base/controller and uses base_footprint mapping.
 - OpenCR stable by-id path is default in `launch/base.launch.py`; XDS110 has its
   own independent radar ports. The watchdog's native turtlebot3_ros child alone
   opens OpenCR. Existing owner or competing command publishers cause failure.
-- Native base publishes `/odom`, `/joint_states`, `/sensor_state`, `/imu`, battery
-  and the **only odom -> base_footprint** transform, normally 20 Hz.
-- Waffle Pi URDF publishes base_footprint -> base_link (z=0.010 m) and robot links.
+- Native base publishes private `/base/native_odom`, wheel/IMU streams, motor
+  telemetry and the sole dynamic native_odom -> native_base_footprint TF, ~20 Hz.
+- The measured [coordinate adapter](BASE_COORDINATES.md) exposes canonical
+  `/odom`, `/joint_states`, and connects the TF chain to the radar-facing
+  base_footprint/base_link. It preserves measurement stamps and covariance.
+- Waffle Pi URDF uses native_ frame prefix; explicit canonical base_link z=0.010 m.
   Existing radar_tf alone publishes base_footprint -> radar_link
   (0.150,0.060,0.190 m, zero nominal rotation). No static odom is allowed.
 - Drive launch sets perception `fixed_frame=odom`. Source receipt stamps are
@@ -55,14 +60,16 @@ That mode starts no base/controller and uses base_footprint mapping.
 - Polling stalls >0.2 s flush the radar UART/parser; multiple frames in a regular
   read retain only the newest complete frame. This avoids stale host-stamped replay.
 - Reactive controller publishes `/radar/cmd_vel_safe`, never conventional `/cmd_vel`.
-  Native base receives only `/base/driver_cmd_vel` from the independent watchdog.
+  Native base receives only `/base/driver_cmd_vel` from the independent watchdog;
+  that private output is in native axes (negative linear means radar-forward).
+  Use canonical safe/request interfaces, never publish private native commands.
 - Both control and watchdog require a continuously refreshed `/radar/enable` Bool
   true lease (0.3 s). Watchdog additionally checks command age <=0.25 s, odometry
   and healthy torque/10–15 V telemetry age <=0.3 s. Zero on invalid/stale/disarmed.
   Dry is immutable for a running guard; relaunch with `actuate:=true` is required.
   Default limits 0.05 m/s / 0.2 rad/s; reverse/unsupported Twist components rejected.
 - Parent watchdog death kills the native serial child via Linux PDEATHSIG, so its
-  OpenCR heartbeat also dies. Physical test confirmed board stop in 0.600 s.
+  OpenCR heartbeat also dies. Corrected physical test confirmed board stop in 0.575 s.
   This is not protection against every partial host hang: a frozen watchdog with
   a still-running native child is not covered by parent-death signaling. Hardware
   power cutoff/operator supervision remains necessary; no safety certification.
@@ -82,6 +89,12 @@ python3 scripts/analyze_lifted_test.py /path/to/NEW_run
 
 The harness performs brief 0.04 m/s and +0.2 rad/s pulses and destructive process
 lifetime tests, then leaves the base stopped. It must not be used on the floor.
+For observed channel diagnosis, `visual_wheel_pulses.py --sequence isolated`
+performs two separate native-channel pulses. It accepts `--start-at-unix` within
+the next minute so an operator can be told the real start time after process
+startup. Always pass `--wheels-lifted-confirmed --output NEW_directory`; do not
+use this diagnostic on the floor.
+
 Watchdog defaults never self-arm. Ctrl+C/releasing the enable lease stops output;
 physical power switch is the emergency action.
 
@@ -99,8 +112,9 @@ read-only register diagnostic and refuses an already-owned serial port.
 
 ## Evidence
 
-[Physical test report](BASE_TEST_2026-11-08.md), compact measurements and plot in
-`results/base_development_20261108/`. Raw bag, JSONL, failed/corrected harness runs,
+[Corrected physical test report](BASE_ALIGNMENT_TEST_2026-11-08.md), compact
+measurements/plot in `results/base_alignment_20261108/`; initial native tests
+remain in `results/base_development_20261108/`. Raw bag, JSONL, failed/corrected harness runs,
 logs and inspected upstream references stay at:
 `/home/tejas/radar_integration_artifacts/base_development_20261108T1940/`.
 Record `/odom /joint_states /sensor_state /tf /tf_static /radar/points

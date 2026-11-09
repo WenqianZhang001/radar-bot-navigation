@@ -20,10 +20,13 @@ def generate_launch_description():
                    '--use-imu',LaunchConfiguration('odom_use_imu')],
         parameters=[{'actuate':ParameterValue(LaunchConfiguration('actuate'),value_type=bool)}])
     state=Node(package='robot_state_publisher',executable='robot_state_publisher',output='screen',
-        parameters=[{'robot_description':description}])
+        parameters=[{'robot_description':description,'frame_prefix':'native_'}],
+        remappings=[('joint_states','/base/native_joint_states')])
+    adapter=Node(package='radar_navigation',executable='base_frame_adapter',output='screen')
     return LaunchDescription([
         DeclareLaunchArgument('opencr_port',default_value='/dev/serial/by-id/usb-ROBOTIS_OpenCR_Virtual_ComPort_in_FS_Mode_FFFFFFFEFFFF-if00'),
         DeclareLaunchArgument('odom_use_imu',default_value='false'),
         DeclareLaunchArgument('actuate',default_value='false'),
         RegisterEventHandler(OnProcessExit(target_action=base,on_exit=[EmitEvent(event=Shutdown(reason='Base watchdog stopped'))])),
-        state,base])
+        RegisterEventHandler(OnProcessExit(target_action=adapter,on_exit=[EmitEvent(event=Shutdown(reason='Base coordinate adapter stopped'))])),
+        state,adapter,base])

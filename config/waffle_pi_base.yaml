@@ -19,5 +19,5 @@ diff_drive_controller:
     namespace: ""
     odometry.publish_tf: true
     odometry.use_imu: false
-    odometry.frame_id: odom
-    odometry.child_frame_id: base_footprint
+    odometry.frame_id: native_odom
+    odometry.child_frame_id: native_base_footprint

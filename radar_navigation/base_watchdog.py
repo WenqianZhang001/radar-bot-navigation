@@ -15,6 +15,7 @@ import sys
 import time
 
 from .base_safety import BaseLease
+from .base_coordinates import native_command
 
 
 def spawn_base(command):
@@ -41,7 +42,9 @@ def main():
     from ament_index_python.packages import get_package_prefix
     executable = str(Path(get_package_prefix('turtlebot3_node'))/'lib/turtlebot3_node/turtlebot3_ros')
     child = spawn_base([executable, '-i', args.port, '--ros-args', '--params-file', args.base_params,
-        '-p', 'odometry.use_imu:='+args.use_imu, '-r', 'cmd_vel:=/base/driver_cmd_vel'])
+        '-p', 'odometry.use_imu:='+args.use_imu, '-r', 'cmd_vel:=/base/driver_cmd_vel',
+        '-r','odom:=/base/native_odom','-r','joint_states:=/base/native_joint_states_raw',
+        '-r','imu:=/base/native_imu_raw'])
     sys.argv = [sys.argv[0], *ros_args]
     import rclpy
     from rclpy.node import Node
@@ -94,10 +97,10 @@ def main():
                 if len(self.get_publishers_info_by_topic('/base/driver_cmd_vel'))>1 or len(self.get_publishers_info_by_topic('/radar/cmd_vel_safe'))>1:
                     raise RuntimeError('Competing base/control command publishers; stopping base heartbeat')
                 now=time.monotonic(); linear,angular=self.lease.output(now)
-                msg=Twist();msg.linear.x=linear;msg.angular.z=angular;self.pub.publish(msg)
+                msg=Twist();msg.linear.x,msg.angular.z=native_command(linear,angular);self.pub.publish(msg)
                 def age(value):return now-value if math.isfinite(value) else None
                 self.status.publish(String(data=json.dumps(dict(reason=self.lease.reason,linear=linear,angular=angular,
-                    actuate=self.lease.actuate,base_pid=child.pid,command_age=age(self.lease.command_at),
+                    actuate=self.lease.actuate,base_pid=child.pid,native_linear=msg.linear.x,native_angular=msg.angular.z,command_age=age(self.lease.command_at),
                     odom_age=age(self.lease.odom_at),enable_age=age(self.lease.enable_at),
                     hardware_age=age(self.lease.hardware_at)))))
         node=Watchdog()

@@ -4,8 +4,9 @@ The canonical working project for Yale ECE 9500: TI AWR1843BOOST radar on a
 Jetson Orin Nano / TurtleBot3 Waffle Pi, ROS 2 Humble. Real USB acquisition,
 processed point clouds, occupancy marking and obstacle-evidence expiry have
 been verified while stationary. Real wheel odometry and bounded supported-wheel
-stop tests now pass. A visual forward-direction mismatch is under investigation;
-**floor testing is blocked** until chassis/radar frames agree.
+stop tests now pass. Radar-facing forward and left-turn directions are visually
+verified with consistent commands, wheel odometry and TF. Floor motion remains
+unauthorized and unvalidated.
 
 ```text
 XDS110 USB -> awr1843_driver -> /radar/points -> radar_pipeline
@@ -70,7 +71,7 @@ Starts guarded OpenCR bring-up, real odom, radar mapping in `odom`, and reactive
 **dry output**. Ctrl+C stops the composition. Motor actuation defaults off; no
 enable lease is generated. Do not run this alongside the stationary launch.
 See [base operation and safety interfaces](docs/BASE_INTEGRATION.md) and
-[measured supported-wheel results](docs/BASE_TEST_2026-11-08.md) before any powered
+[corrected supported-wheel results](docs/BASE_ALIGNMENT_TEST_2026-11-08.md) before any powered
 test. Floor movement requires explicit approval and supervision.
 
 ## View and inspect
@@ -88,7 +89,9 @@ ros2 topic echo /radar_front/status
 Source/processed clouds run near 10 Hz; occupancy near 5 Hz. Source fields are
 x/y/z/velocity/snr/noise; processed fields are x/y/z/doppler, with quality retained
 in metadata. Default mapping frame `base_footprint` is **stationary only**. Moving
-mapping requires real measurement-time odometry, never a static odom substitute.
+mapping uses real measurement-time odometry in the drive launch. The
+[measured native/canonical adapter](docs/BASE_COORDINATES.md) makes radar-facing
++x forward without changing the surveyed radar mount or native firmware.
 
 ## Layout and evidence
 
@@ -117,8 +120,8 @@ Raw bags are preserved outside Git at `/home/tejas/radar_integration_artifacts/`
 No physical autonomous floor navigation or stopping-distance validation is claimed.
 Next: explicitly approved, supervised low-speed radar stop test on the floor,
 followed by measured avoidance and odometry drift trials. Supported-wheel stops
-measured 0.212 s explicit zero, 0.258 s disable, 0.429 s command-source death and
-0.600 s watchdog/base death. These are not floor stopping distances.
+measured 0.213 s explicit zero, 0.209 s disable, 0.435 s command-source death and
+0.575 s watchdog/base death. These are not floor stopping distances.
 
 The broader Jetson middleware suite exposes an [optional native Nav2 teardown
 failure](docs/NAV2_NATIVE_TEARDOWN.md); the stationary system does not run Nav2.
