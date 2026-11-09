@@ -324,3 +324,63 @@ for Jetson deployment after XDS110 is available.
   foil/spatial-sign calibration, real odometry/command timeout/stopping distance,
   full Nav2 actions/native teardown, dual-radar operation and radar-only
   localization remain open. Stationary consolidation does not authorize motion.
+
+### 2026-11-08 — Physical-method retrospective and publication audit
+This entry consolidates earlier measurement details for course-report use; it
+records no additional physical trial or motion.
+- Initial inventory (~15:06 EST): ubuntu/aarch64, Humble domain 30, no active
+  radar/viewer/odom graph, only OpenCR enumerated. XDS110 reappeared before the
+  16:22 deployment. Absence was not diagnosed as a hardware fault. Host process/
+  serial checks required inspection outside the sandbox's hidden PID/device view.
+  The first passive ROS observer used the wrong global executor with an explicit
+  Context; corrected to SingleThreadedExecutor(context=ctx). Inventory was read-only.
+- Runtime 8077be6 used the preserved 9bee692 driver and original mount
+  (0.036,-0.065,0.185) m. First bag: 178.199 s, 37.6 MiB, 7,594 messages.
+  Required 30.0188 s probe: raw 278/9.2609 Hz, processed 277/9.2275 Hz including
+  subscriber discovery, receipt-to-probe p50 19.486 ms/p95 21.271 ms. Settled
+  intervals were ~10 Hz. These ages are not hardware acquisition latency;
+  hardware frame gaps/resets remain null because the driver discards its counter.
+- After repositioning to the third/top plate, the operator measured antenna
+  center from the floor projection of the drive-wheel midpoint: x=+0.150,
+  y=+0.060, z=+0.190 m, +/- 1-2 cm ruler uncertainty. Angles were visually zero,
+  not inclinometer measurements. Robot stationary; plate security for movement
+  explicitly unverified. Current default retains these qualifications.
+- Before the new baseline, operator corrected that earlier data may contain the
+  reflector. Waited a logged 5.007 s absent interval and recorded a fresh 30.147 s
+  baseline; earlier bags were preserved, never relabeled clean ground truth.
+- Survey: deepest foil-cavity center (1.150,0.060,~0.190) m. The confirmed 1.00 m
+  antenna distance was to that recessed point, not the rim. Opening 0.30 x 0.21 m,
+  depth 0.16 m, front rim x~0.990 m. Conservative foil box x=[0.99,1.15],
+  y=[-0.09,0.21], z=[0.085,0.295] m, with target uncertainty +/- 1-2 cm.
+- Full-assembly 30.140 s phase included newly added stacked boxes and an
+  unsurveyed fiducial/cardboard behind/above the foil. They were absent from the
+  baseline. Foil and marker/cardboard were attached and removed together, not as
+  separate factors. Boxes-only phase lasted 36.969 s; final all-added-objects-
+  absent phase 39.376 s. 1,236.054 s / 285.9 MiB / 67,780-message continuous bag
+  retains operator transitions, which are excluded from stable phase comparisons.
+- ROI was the physical box padded 0.12 m forward and 0.20 m lateral/vertical,
+  an association window rather than an accuracy tolerance. Baseline-contrast
+  0.1 m voxels required >=20% present-frame occupancy and >=20 percentage-point
+  increase; target-area map cells required >=50% present maps and <=5% baseline.
+- Present-mode coordinates (1.061,0.060,0.092) and (1.233,0.060,0.061) m give
+  recessed-center residuals (-8.9,0,-9.8) and (+8.3,0,-12.9) cm, 3D magnitudes
+  13.2/15.3 cm. These are not isolated reflector sensor errors. One mode fits the
+  foil envelope; the other is ~8.6 cm outside it. Pooled x median 1.147 m lies
+  between modes and must not be advertised as 3 mm accuracy. Centered placement
+  cannot establish lateral sign correctness; heights/tilt/supports remain confounded.
+- Cells 20110/20112 centered at (1.05,0.05)/(1.25,0.05) m stayed occupied in
+  100% of boxes-only maps. After final clearing, actual map header-time expiry
+  from replayed fresh evidence was 1.638813337 / 1.528897564 s, respectively,
+  with zero recurrence in the analyzed window. Both unknown by 22:39:23.982500 UTC.
+  Exact action timing was not observed: foil/marker request-to-ack interval
+  130.51 s; boxes 58.57 s. Cells were unknown ~26 s before acknowledgement, so
+  the first post-ack map (~0.1 s) is not physical removal latency. Unknown != free.
+- Spatial report generation briefly failed serializing NumPy int64 voxel keys;
+  converted keys to ordinary integers and reran all analysis. Acquisition/bags
+  were unaffected. Numeric processed-point/mount consistency and raw quality
+  preservation were verified separately from physical spatial accuracy.
+- Consolidated implementation was published as a952910cf5ff1a4759fbcf9cd6bc832963e54e08;
+  canonical GitHub main and the clean tracking Jetson main matched. Publication
+  tree matched the reviewed/staged tree exactly, and runtime hashes matched the
+  physically smoke-tested code. This subsequent journal-only audit preserves
+  the quantitative reconstruction without changing the tested runtime.
