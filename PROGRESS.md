@@ -567,3 +567,21 @@ records no additional physical trial or motion.
   antenna/observer direction, original ruler axes and board/chassis FRONT marking.
   Must correct mount/TF and command/odom conventions consistently, or physically
   face radar toward native base forward; do not merely invert cmd_vel.
+
+### 2026-11-08 — Trace direction without changing motor or TF signs
+- Operator confirms observer stood directly in radar scan direction, also used
+  as +x in original mount survey. Chassis/OpenCR FRONT marking not yet checked.
+  Requested visible FRONT and motor ID labels, or readiness for isolated-wheel
+  pulses if inaccessible. No floor movement; no command/odometry/TF sign changes.
+- Reviewed own watchdog: nonnegative linear command passes unchanged; base child
+  remap changes topic only. Official TurtleBot3 2.3.6 turtlebot3.cpp callback
+  writes int(linear.x*100) and int(angular.z*100), no sign flip. Board register
+  after previous physical guard-kill test retained +4, agreeing with +.04 m/s.
+- Official OpenCR source uses left=v-w*b/2, right=v+w*b/2, motor IDs 1/2; source
+  may not exactly match flashed board. Wheel telemetry and observer report fit
+  multiple physical conventions, so do not declare a verified 180-degree frame
+  reversal or motor assembly fault. Pure rotation preserves yaw sign under a
+  180-degree body-axis rotation, hence correct-looking turn does not rule it out.
+- Official 2.3.6 joint_state.cpp confirms RPM_TO_MS velocities, TICK_TO_RAD positions;
+  this independently supports the measurement-threshold correction above.
+  Saved upstream references in artifact root; no vendor firmware/code rewritten.
