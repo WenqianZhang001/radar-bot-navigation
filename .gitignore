@@ -13,3 +13,6 @@ data/
 build/
 install/
 log/
+
+# raw IQ recordings from dca1000_capture
+captures/
