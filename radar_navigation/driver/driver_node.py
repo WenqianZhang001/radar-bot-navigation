@@ -13,6 +13,7 @@ Parameters:
   time_offset          seconds subtracted from the timestamps, for the radar's measurement delay
 """
 import os
+import time
 
 import rclpy
 import serial
@@ -70,15 +71,31 @@ class Awr1843Driver(Node):
         self.parser = FrameParser()
         self.pub = self.create_publisher(PointCloud2, 'radar/points', 10)
         self.last_frame = self.get_clock().now()
+        self.last_poll = time.monotonic()
         self.create_timer(0.01, self.read_data)      # frames arrive at the radar's frame rate (10 Hz)
         self.create_timer(1.0, self.check_alive)
         self.get_logger().info(f'radar running; publishing radar/points in frame {self.frame_id}')
 
     def read_data(self):
+        now = time.monotonic()
+        gap = now-self.last_poll
+        self.last_poll = now
+        if gap > .2:
+            # Host receipt stamps cannot date buffered hardware frames. On a
+            # stalled reader, drop both UART and partial parser state and wait
+            # for a new frame instead of presenting old scans as fresh.
+            waiting = self.data.in_waiting
+            self.data.reset_input_buffer()
+            self.parser = FrameParser()
+            self.get_logger().warn(f'reader paused {gap:.3f} s; discarded {waiting} buffered bytes; awaiting fresh frame')
+            return
         waiting = self.data.in_waiting
         if not waiting:
             return
-        for _frame_num, points in self.parser.feed(self.data.read(waiting)):
+        frames = self.parser.feed(self.data.read(waiting))
+        if len(frames) > 1:
+            self.get_logger().warn(f'discarded {len(frames)-1} queued radar frames; publishing newest only', throttle_duration_sec=5.)
+        for _frame_num, points in frames[-1:]:
             now = self.get_clock().now()
             header = Header(stamp=(now - self.time_offset).to_msg(), frame_id=self.frame_id)
             # TI axes (x right, y forward, z up) -> ROS axes (x forward, y left, z up)

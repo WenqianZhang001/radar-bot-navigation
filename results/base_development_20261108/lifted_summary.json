@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "physical_setup": "wheels lifted; chassis stationary; operator-confirmed support/top plate/12V supply",
+  "floor_motion": false,
+  "base_pid": 10649,
+  "guard_pid": 10636,
+  "forward_both_encoders_positive": true,
+  "left_turn_encoder_signs": true,
+  "explicit_zero_stop_s": 0.21158056299827877,
+  "disable_stop_s": 0.2577950260019861,
+  "producer_death_stop_s": 0.42920051100009005,
+  "producer_death_guard_reason": "stale_command",
+  "heartbeat_after_guard_death": 195,
+  "latched_linear_register_after_guard_death": 4,
+  "emergency_stop_required": false,
+  "opencr_stop_after_guard_death_s": 0.5996457440014638,
+  "base_child_killed_by_kernel": true,
+  "method": "Wheel-only odometry on support; chassis stationary. NOT floor accuracy or stopping distance.",
+  "velocity_units": "Installed JointState velocities empirically match wheel-surface m/s; positions are rad.",
+  "stop_criterion": "Three consecutive wheel samples <=0.002 m/s (ROS) or <=2 raw motor units (OpenCR); time of first sample.",
+  "pulses": {
+    "forward_pulse": {
+      "wheel_angle_change_rad": [
+        2.159845248,
+        2.139903495
+      ],
+      "encoder_distance_m": 0.07094585425950001,
+      "encoder_yaw_rad": -0.0022929541777003365,
+      "steady_odom_linear_m_s": 0.0332381362390585,
+      "steady_odom_angular_rad_s": -0.0017578309284004142,
+      "steady_left_surface_m_s": 0.038776992282524174,
+      "steady_right_surface_m_s": 0.038776992282524174
+    },
+    "left_turn_pulse": {
+      "wheel_angle_change_rad": [
+        -1.5447188669999998,
+        1.5554567340000003
+      ],
+      "encoder_distance_m": 0.00017717480550000754,
+      "encoder_yaw_rad": 0.35646618408710806,
+      "steady_odom_linear_m_s": -3.6488196596185544e-17,
+      "steady_odom_angular_rad_s": 0.1662559855933427,
+      "steady_left_surface_m_s": -0.02769785163037441,
+      "steady_right_surface_m_s": 0.02769785163037441
+    }
+  }
+}

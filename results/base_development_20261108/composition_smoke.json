@@ -1,0 +1,72 @@
+{
+  "duration": 20.036974198999815,
+  "counts": {
+    "processed": 201,
+    "map": 101,
+    "base": 401,
+    "safe": 402,
+    "guard": 401,
+    "source": 201,
+    "odom": 401,
+    "health": 200
+  },
+  "rates": {
+    "processed": 10.02872914342818,
+    "map": 5.00385993552198,
+    "base": 20.010480326986304,
+    "safe": 20.0179052544694,
+    "guard": 20.00966784510509,
+    "source": 9.996086193887056,
+    "odom": 19.99917624792777,
+    "health": 10.00041279593473
+  },
+  "frames": {
+    "odom": [
+      "odom"
+    ],
+    "source": [
+      "radar_link"
+    ],
+    "processed": [
+      "odom"
+    ],
+    "map": [
+      "odom"
+    ]
+  },
+  "tf_edges": [
+    "base_footprint -> base_link",
+    "base_footprint -> radar_link",
+    "odom -> base_footprint"
+  ],
+  "base_always_zero": true,
+  "guard_dry": true,
+  "max_dry_output": [
+    0.05,
+    0.0
+  ],
+  "publishers": {
+    "/odom": [
+      "diff_drive_controller"
+    ],
+    "/radar/points": [
+      "awr1843_driver"
+    ],
+    "/base/driver_cmd_vel": [
+      "base_watchdog"
+    ],
+    "/radar/cmd_vel_safe": [
+      "radar_control"
+    ],
+    "/cmd_vel": [],
+    "/tf": [
+      "diff_drive_controller",
+      "robot_state_publisher"
+    ],
+    "/tf_static": [
+      "robot_state_publisher",
+      "radar_tf"
+    ]
+  },
+  "passed": true
+}

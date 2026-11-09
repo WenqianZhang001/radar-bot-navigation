@@ -18,7 +18,9 @@ def main():
     class Control(Node):
         def __init__(self):
             super().__init__('radar_control')
-            self.gate = SafetyGate()
+            self.gate = SafetyGate(
+                max_speed=self.declare_parameter('max_speed', .10).value,
+                max_turn=self.declare_parameter('max_turn', .35).value)
             self.mode = self.declare_parameter('mode','external').value
             if self.mode not in ('external','reactive'):
                 raise ValueError('mode must be external or reactive')

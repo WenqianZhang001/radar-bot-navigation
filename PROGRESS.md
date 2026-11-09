@@ -7,20 +7,23 @@ the Jetson use ~/radar_integration_ws and system.launch.py (or the foreground
 start_stationary.sh helper); the old driver workspace is archival, not sourced.
 The default top-plate TF is (0.150,0.060,0.190) m, nominal zero angles, one publisher.
 
-Clean build and 29 offline tests pass. Required stationary middleware checks and
-a normal non-symlink installation pass. Real 15.02 s smoke measured 150 source/raw/
-processed clouds each (~10 Hz), 75 maps (~5 Hz), healthy status and clean stop.
-Broader middleware: five pass, one optional native Nav2 teardown failure remains;
-do not claim the entire suite passes. See docs/NAV2_NATIVE_TEARDOWN.md.
+Current base integration adds guarded native TurtleBot3 bring-up, real 20 Hz wheel
+odometry, unique odom/base/radar TF edges, and odom-frame radar perception. Dry
+reactive control/dropout checks pass; corrected offline suite 33/33 passes.
+Supported-wheel physical tests passed: explicit zero stop 0.212 s, disable 0.258 s,
+command producer death 0.429 s, guard/native-child death/OpenCR timeout 0.600 s.
+No floor motion or ground-truth odometry accuracy has been validated. Default
+drive launch is dry/disarmed; stationary sensing-only launch remains available.
+See docs/BASE_INTEGRATION.md and docs/BASE_TEST_2026-11-08.md.
 
 Physical November 8 extended-target results and limits remain below and in
 [the report](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md): support boxes sustained
 target-area occupancy after foil/marker removal; all-added-object removal yielded
 unknown-cell expiry at 1.529/1.639 s from fresh evidence. Spatial return modes and
 survey/tilt/support ambiguity prevent a precision foil-accuracy claim.
-No robot motion has been commanded. Next: secure/survey the mount, validate real
-wheel odometry and base watchdog, resolve Nav2 teardown, then separately authorize
-and measure supervised low-speed reactive control and stopping distances.
+Nav2's independent teardown investigation remains outside this hardware change.
+Next: visual direction confirmation, then explicitly approved supervised low-speed
+floor radar stopping/avoidance and measured odometry drift/traction trials.
 
 ## Integration update — 2026-11-08
 Both remote main revisions match the project handoff (`facbc10` and Wenqian's
@@ -384,3 +387,152 @@ records no additional physical trial or motion.
   tree matched the reviewed/staged tree exactly, and runtime hashes matched the
   physically smoke-tested code. This subsequent journal-only audit preserves
   the quantitative reconstruction without changing the tested runtime.
+
+### 2026-11-08 — Base/odometry development: inventory and preparation
+- Starting from clean tracking main 9f6d201; canonical GitHub main matches.
+  No parallel cloud-agent commits/branches were present at initial check.
+- Jetson ubuntu/aarch64/Humble domain 30. OpenCR by-id resolves ttyACM0; radar
+  XDS110 command/data ttyACM1/ttyACM2. All unowned, no robot/radar processes active.
+  Installed turtlebot3_node 2.3.6 and Waffle Pi model/parameters available.
+- Stock robot.launch starts LiDAR as well as the base and state publisher. Plan
+  a canonical base-only composition, with the real odometry node as sole
+  odom->base_footprint publisher and URDF sole base_footprint->base_link publisher.
+  Hardware mount remains sole radar_tf child of base_footprint.
+- Humble-specific Waffle Pi parameters select unstamped Twist (root non-Humble
+  YAML selects stamped messages); use the correct Humble interface explicitly.
+  Wheel radius 0.033 m/separation 0.287 m are installed defaults, not newly
+  surveyed wheel geometry. Stock odometry fuses IMU heading; lifted differential
+  wheel tests need wheel-only odometry because the chassis will not yaw.
+- Requested operator preparation before bring-up: secure top plate/cables, stable
+  support with both wheels clear, normal motor battery/power connected, and
+  operator able to cut power. No motor commands or base bring-up yet. Physical
+  floor motion requires later explicit approval; Nav2 is outside this workstream.
+
+### 2026-11-08 — OpenCR power/reset diagnosis and watchdog design
+- Read-only DXL protocol 2 / ID 200 probe: model 0x5000, model information 2,
+  firmware register 5, supply 12.02 V. Motor device status -1, connected=false,
+  torque=false, all motor telemetry zero. USB logic worked, motor initialization
+  had failed before power was attached. No commands or firmware flashing used.
+- First reported reset did not reboot OpenCR: uptime ~20,090,463 ms (~5.6 h).
+  Requested the labeled RESET specifically, avoiding SW1/SW2 motor-test buttons.
+  Second reset verified uptime 65,599 ms, 12.04 V, device status 0, both motors
+  connected, torque=true, zero velocity and encoder positions 1772/3737 ticks.
+  Proper power followed by an actual reset resolved the latched connection state.
+- Upstream ROBOTIS source inspection: OpenCR has a 500 ms ROS-node heartbeat
+  timeout; base node sends heartbeat every 100 ms even if cmd_vel stops. Velocity
+  write callbacks have no command-age watchdog in the inspected source. This
+  cannot yet be claimed as behavior of this specific board; physical tests pending.
+- Added separate base_watchdog using stock turtlebot3_ros as its serial-owning
+  child. Command lease 0.25 s, enable lease 0.3 s, odometry/hardware freshness
+  0.3 s, dry by default, speed caps 0.05 m/s and 0.2 rad/s. Child subscribes only
+  /base/driver_cmd_vel; conventional /cmd_vel is not wired directly to motors.
+  Guard requires fresh healthy motor torque/voltage telemetry as well as odometry.
+- Linux PR_SET_PDEATHSIG=SIGKILL links base child lifetime to watchdog death,
+  preventing a surviving heartbeat process from keeping a latched command alive
+  when its parent watchdog dies. Child spawned before rclpy/DDS threads start;
+  fork-race parent-PID check included. Pure Linux parent-death regression passed.
+- Added base.launch.py (base + stock Waffle Pi URDF, no LiDAR) and drive.launch.py
+  composing real odom, existing radar with fixed_frame=odom and dry reactive
+  output. Wheel-only odometry selected for lifted tests; IMU mode remains an
+  explicit option because chassis yaw is fixed on the support.
+- Sandbox offline run passed new lease/PDEATHSIG tests but existing viewer socket
+  test was denied by sandbox networking. This is an environment failure; rerun
+  full tests on the host before treating build/test status as passed.
+
+### 2026-11-08 — Real base/odom and dry radar-control validation
+- Built initial integration in 4.01 s; host offline suite 32/32 passed in 1.807 s.
+  Started base with actuate=false, recorded telemetry and stock Waffle Pi URDF.
+  OpenCR gyro calibration completes in 5 s; actual wheel/sensor/IMU/odom data
+  publishes ~20 Hz. Both motors connected, torque=true, supply ~12.04 V.
+  Verified real odom->base_footprint and URDF's 0.01 m base_link joint.
+- Started radar with fixed_frame=odom and reactive dry controller capped at
+  0.05 m/s / 0.2 rad/s. Observed enabled dry forward output 0.05 m/s; all actual
+  base-command outputs remained zero because the independent guard was dry.
+- Controlled SIGSTOP/SIGCONT of only owned driver/native-base processes tested
+  sensor and odometry dropouts while operator lease stayed alive. Independent
+  observer measured disable-to-zero 0.031 s, radar-pause-to-zero ~0.300 s, and
+  odometry-pause-to-zero ~0.269 s; health became stale and processing stopped
+  without invented/latest odometry. Initial validation script reported false
+  timing failures because it serviced fewer callbacks than incoming topic rate;
+  removed its artificial sleep and rate-limited enable publication independently.
+- Independent evidence also found a real problem: 13 source frames in 0.25 s
+  after reader resume, buffered before/through the pause but host-stamped fresh.
+  Changed acquisition to flush UART + partial parser state after >0.2 s polling
+  stall and retain only the newest complete frame from an ordinary read batch.
+  Hardware acquisition timestamps remain unavailable; this prevents stale UART
+  replay, not a claim of measured hardware latency. Physical retry pending.
+- Guard parameter validation now rejects nonfinite/nonpositive leases and limits
+  beyond 0.10 m/s / 0.35 rad/s absolute bounds. Unknown status ages serialize as
+  JSON null rather than Infinity. No powered wheel motion has yet been commanded.
+
+### 2026-11-08 — First powered supported-wheel pulses and measurement correction
+- Operator confirmed secured top plate, stable support with both wheels clear,
+  and 12 V / 5 A supply. No floor motion authorized or commanded.
+- Short 0.04 m/s forward and +0.2 rad/s left-turn commands produced expected
+  encoder signs: both positive forward, left negative/right positive turning.
+- First harness aborted before disable/death tests because its activity threshold
+  assumed JointState velocity in rad/s. Installed driver reports ~0.039 m/s
+  during 0.04 m/s forward and ~0.028 m/s during 0.2 rad/s turn, consistent
+  with wheel surface velocity. Changed activity threshold to 0.01 m/s and stop
+  threshold to 0.002 m/s, requiring three consecutive samples. The initial
+  0.039 s explicit-zero result used the wrong threshold and is NOT accepted.
+- Failure cleanup disabled the lease and killed the guard/native child. Preserved
+  all data in base_development_20261108T1940/lifted_motor_test; corrected retry
+  uses a new directory. No emergency power action was needed.
+
+### 2026-11-08 — Accepted supported-wheel control and independent timeout results
+- Corrected reader/dropout retry passed: disable output zero 0.014665 s, stale
+  radar/odom stopped dry output, no processed frames >1 s into odometry pause,
+  base commands always zero in dry mode, resume only 2 source frames/0.25 s.
+- Corrected physical harness passed forward/turn encoder signs; measured wheel
+  stop 0.211581 s explicit zero, 0.257795 s enable false, 0.429201 s producer
+  SIGKILL with enable alive (guard reason stale_command). All motion on support.
+- SIGKILL watchdog killed native serial child via Linux PDEATHSIG; port released.
+  Read-only OpenCR polls measured stop at 0.599646 s, three consecutive samples
+  <=2 raw motor units. Latched linear register remained 4 (0.04 m/s), heartbeat
+  register 195; no new heartbeat sent. No emergency stop needed. This establishes
+  independent heartbeat expiry on this board, not cmd_vel timeout with heartbeat.
+- Stop criterion for ROS telemetry: <=0.002 m/s for three consecutive ~20 Hz
+  samples; timestamp first sample. Single-trial measurements, not worst-case bounds.
+- Forward two-second window encoder distance 0.070946 m, turn yaw 0.356466 rad.
+  Median surface velocities +0.038777/+0.038777 m/s forward and -0.027698/
+  +0.027698 m/s turn. Wheel geometry remains stock .033/.287 m, not surveyed.
+  Chassis stationary throughout; these are NOT ground-truth body displacement.
+- Operator did not watch first runs. Requested and executed separately announced
+  visual two-second forward / three-second stop / two-second left-turn repeat.
+  Awaiting independent visual confirmation; no floor movement authorized.
+- Final offline rerun found /proc process-exit race in test cleanup, fixed by
+  handling disappearance; 33/33 then passed in 1.756 s. Build 4.12 s. Earlier
+  33/33 run passed in 1.875 s; no Nav2 tests/code changed in this hardware task.
+- Full real composition produced ~20 Hz odom, ~10 Hz source/processed and 5 Hz
+  map in odom, base always zero while dry. Smoke observer initially used a
+  two-argument callback unsupported by this Humble rclpy; fixed observer only.
+  Then corrected an assertion which wrongly excluded RSP's legitimate /tf wheel
+  joint updates. RSP and diff_drive_controller on /tf are expected, not duplicate
+  odom publishers. Final quantitative retry follows.
+- Artifacts: /home/tejas/radar_integration_artifacts/base_development_20261108T1940;
+  hardware_bag, observations.jsonl, failed first and accepted retry motor runs,
+  logs, probes, phase events and visual_repeat preserved. Compact summary/plot
+  in results/base_development_20261108; analyze_lifted_test.py reproduces them.
+- Documented guard-freeze limitation: PDEATHSIG handles death, not a hung guard
+  while native heartbeat continues. No certification or universal fail-safe claim.
+
+### 2026-11-08 — Complete launch smoke and operating workflow
+- Final drive.launch.py smoke passed, 20.036974 s observer interval: 401 odom
+  (19.999 Hz), 201 source (9.996 Hz), 201 processed (10.029 Hz), 101 occupancy
+  (5.004 Hz). Processed/map frames odom; source radar_link. All 401 observed
+  base outputs zero while dry, despite enabled reactive output reaching .05 m/s.
+- Graph: sole /odom diff_drive_controller; sole source awr1843_driver; sole
+  /radar/cmd_vel_safe radar_control; sole /base/driver_cmd_vel base_watchdog;
+  /cmd_vel has no publishers. /tf legitimately contains diff_drive_controller
+  odom and robot_state_publisher joint updates. /tf_static contains only RSP
+  robot static links and radar_tf mount. Relevant chain: odom->base_footprint,
+  base_footprint->base_link, base_footprint->radar_link. No synthetic/static odom.
+- Added start_drive.sh foreground command (Ctrl+C stop), base operation and
+  physical test reports, bounded supported-wheel/visual scripts, read-only
+  OpenCR diagnostic, reproducible motor analysis and compact measured JSON/plot.
+  All launches/config/scripts/docs included through existing ROS install globs.
+  Added runtime dependencies for stock TurtleBot3, URDF/xacro and DXL SDK.
+- Preserved previous stationary launch and all prior experiments/workspaces.
+  New raw evidence remains outside Git; compact results only committed.
+  Main remained 9f6d201 on pre-publication check; no Nav2 branch changes overwritten.

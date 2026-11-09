@@ -3,7 +3,8 @@
 The canonical working project for Yale ECE 9500: TI AWR1843BOOST radar on a
 Jetson Orin Nano / TurtleBot3 Waffle Pi, ROS 2 Humble. Real USB acquisition,
 processed point clouds, occupancy marking and obstacle-evidence expiry have
-been verified while stationary. Robot motion is the next development stage.
+been verified while stationary. Real wheel odometry and bounded supported-wheel
+motor/stop tests now pass; supervised floor navigation remains unvalidated.
 
 ```text
 XDS110 USB -> awr1843_driver -> /radar/points -> radar_pipeline
@@ -58,6 +59,19 @@ rotation, from `base_footprint` to `radar_link`. No mount override or separate T
 command is needed. The ruler survey is accurate only to approximately 1-2 cm;
 angles were visually estimated. Secure and recheck the mount before movement.
 
+## Real base odometry and radar control
+
+```bash
+~/radar_integration_ws/src/radar_navigation/scripts/start_drive.sh
+```
+
+Starts guarded OpenCR bring-up, real odom, radar mapping in `odom`, and reactive
+**dry output**. Ctrl+C stops the composition. Motor actuation defaults off; no
+enable lease is generated. Do not run this alongside the stationary launch.
+See [base operation and safety interfaces](docs/BASE_INTEGRATION.md) and
+[measured supported-wheel results](docs/BASE_TEST_2026-11-08.md) before any powered
+test. Floor movement requires explicit approval and supervision.
+
 ## View and inspect
 
 Forward port 8765 through SSH and open `http://localhost:8765` for source points.
@@ -81,7 +95,8 @@ mapping requires real measurement-time odometry, never a static odom substitute.
 | --- | --- |
 | `radar_navigation/driver/` | Integrated Wenqian hardware driver and packet framing |
 | `radar_navigation/` | Cloud conversion, filtering, occupancy, replay and control research |
-| `launch/system.launch.py` | Canonical stationary launch; one TF and one serial owner |
+| `launch/system.launch.py` | Stationary sensing; one radar TF and serial owner |
+| `launch/drive.launch.py`, `base.launch.py` | Real base/odom, guarded commands and odom-frame radar composition |
 | `config/` | Installed default mount, radar profile, RViz and experimental Nav2 settings |
 | `radar_viewer.py` | Subscriber-only browser viewer by default |
 | `tests/`, `tests_ros/` | Offline and isolated-domain middleware/PTY tests |
@@ -98,10 +113,11 @@ Raw bags are preserved outside Git at `/home/tejas/radar_integration_artifacts/`
 [Physical measurements and plots](docs/TOP_PLATE_EXPERIMENT_2026-11-08.md) ·
 [Engineering journal](PROGRESS.md) · [Contribution history](CONTRIBUTORS.md)
 
-No physical autonomous navigation or stopping-distance validation is claimed.
-Next: secure the mount, survey spatial performance with unchanged supports,
-validate wheel odometry and the base command timeout, then perform separately
-approved low-speed supervised control tests.
+No physical autonomous floor navigation or stopping-distance validation is claimed.
+Next: explicitly approved, supervised low-speed radar stop test on the floor,
+followed by measured avoidance and odometry drift trials. Supported-wheel stops
+measured 0.212 s explicit zero, 0.258 s disable, 0.429 s command-source death and
+0.600 s watchdog/base death. These are not floor stopping distances.
 
 The broader Jetson middleware suite exposes an [optional native Nav2 teardown
 failure](docs/NAV2_NATIVE_TEARDOWN.md); the stationary system does not run Nav2.
