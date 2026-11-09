@@ -10,8 +10,12 @@ The default top-plate TF is (0.150,0.060,0.190) m, nominal zero angles, one publ
 Current base integration adds guarded native TurtleBot3 bring-up, real 20 Hz wheel
 odometry, unique odom/base/radar TF edges, and odom-frame radar perception. Dry
 reactive control/dropout checks pass; corrected offline suite 33/33 passes.
-Supported-wheel physical tests passed: explicit zero stop 0.212 s, disable 0.258 s,
+Supported-wheel stop tests passed: explicit zero stop 0.212 s, disable 0.258 s,
 command producer death 0.429 s, guard/native-child death/OpenCR timeout 0.600 s.
+CRITICAL: visual observation found forward wheel tops moving away from the
+radar-facing observer, while left-turn directions matched. Encoder signs alone
+did not validate physical forward direction. Floor testing is blocked pending
+chassis/radar frame diagnosis and correction; no blind command sign flip.
 No floor motion or ground-truth odometry accuracy has been validated. Default
 drive launch is dry/disarmed; stationary sensing-only launch remains available.
 See docs/BASE_INTEGRATION.md and docs/BASE_TEST_2026-11-08.md.
@@ -22,7 +26,7 @@ target-area occupancy after foil/marker removal; all-added-object removal yielde
 unknown-cell expiry at 1.529/1.639 s from fresh evidence. Spatial return modes and
 survey/tilt/support ambiguity prevent a precision foil-accuracy claim.
 Nav2's independent teardown investigation remains outside this hardware change.
-Next: visual direction confirmation, then explicitly approved supervised low-speed
+Next: resolve physical forward/frame mismatch, then explicitly approved low-speed
 floor radar stopping/avoidance and measured odometry drift/traction trials.
 
 ## Integration update — 2026-11-08
@@ -536,3 +540,30 @@ records no additional physical trial or motion.
 - Preserved previous stationary launch and all prior experiments/workspaces.
   New raw evidence remains outside Git; compact results only committed.
   Main remained 9f6d201 on pre-publication check; no Nav2 branch changes overwritten.
+
+### 2026-11-08 — Visual direction mismatch blocks floor testing
+- Published tested software/stop evidence as 29948a2080e6c3bac1fad3c59cc6f31d9ea9d763
+  on canonical main. Both runtime/source trees verified identical to GitHub tree
+  5d220812516f7e32a08e852b79c58e95c81c7eea; clean tracked checkouts.
+  Published install rebuild passed in 4.07 s. Parallel Nav2 branch
+  fix/humble-nav2-teardown at 4d3fb7d was left untouched.
+- Finalized original hardware bag: 2778.455724 s, 584651 messages, ~637 MiB.
+  Final read-only stopped probe: both raw wheel velocities zero, motors connected,
+  torque true, 12.04 V. All launch nodes stopped cleanly; source hash manifest
+  saved in artifact root. Raw data includes long idle intervals and multiple
+  restarts; use phase events, not whole-bag rates, for performance claims.
+- Operator watched first visual repeat but could not establish absolute forward
+  direction. Clarified forward tire tops toward a person facing antenna/front;
+  left turn observer-right wheel away / observer-left wheel toward. Executed
+  separately announced second supported-wheel repeat, recorded visual_repeat2
+  and visual_repeat2_bag. Encoders +/+ forward, -/+ turn; final velocities zero.
+- Operator reports BOTH tops actually AWAY during commanded forward, but correct
+  observer-left toward / observer-right away for left turn. Thus physical forward
+  convention is NOT verified despite positive encoder/odom signs. No floor motion
+  was attempted. Stopped all test base processes and recording; floor tests blocked.
+- A 180-degree difference between native chassis forward and assumed radar-facing
+  forward would reverse translation while preserving yaw sign, consistent with
+  report, but this is a hypothesis, not established hardware diagnosis. Requested
+  antenna/observer direction, original ruler axes and board/chassis FRONT marking.
+  Must correct mount/TF and command/odom conventions consistently, or physically
+  face radar toward native base forward; do not merely invert cmd_vel.

@@ -4,7 +4,8 @@ The canonical working project for Yale ECE 9500: TI AWR1843BOOST radar on a
 Jetson Orin Nano / TurtleBot3 Waffle Pi, ROS 2 Humble. Real USB acquisition,
 processed point clouds, occupancy marking and obstacle-evidence expiry have
 been verified while stationary. Real wheel odometry and bounded supported-wheel
-motor/stop tests now pass; supervised floor navigation remains unvalidated.
+stop tests now pass. A visual forward-direction mismatch is under investigation;
+**floor testing is blocked** until chassis/radar frames agree.
 
 ```text
 XDS110 USB -> awr1843_driver -> /radar/points -> radar_pipeline
